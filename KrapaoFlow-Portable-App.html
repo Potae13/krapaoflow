@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="KrapaoFlow" />
   <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
-  <link rel="manifest" href="./manifest.json?v=6" />
+  <link rel="manifest" href="./manifest.json?v=7" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icon.svg" />
   <style>
@@ -53,14 +53,22 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "IBM Plex Sans Thai", "Sarabun", sans-serif;
   background-color: var(--bg-app);
   color: var(--text-main);
   line-height: 1.5;
+  width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
-  padding-bottom: 80px;
+  padding-bottom: 45vh;
 }
 
 /* Top Header (with iPadOS Standalone Safe-Area Inset support) */
@@ -1456,10 +1464,25 @@ button:active,
   .charts-grid-top,
   .target-chart-grid,
   .sync-architecture-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .dashboard-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nav-tabs {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .nav-tab-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 9px 12px;
+    font-size: 0.84rem;
+  }
+  .date-quick-bar {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
@@ -1677,6 +1700,14 @@ button:active,
                   💡 โหมดจัดการประเภท: กดปุ่ม <strong>✏️</strong> เพื่อแก้ไขชื่อ/ไอคอน/สี หรือกด <strong>✕</strong> เพื่อลบประเภทที่คุณไม่ได้ใช้ออกได้เลย
                 </div>
                 <div class="category-grid" id="categoryPickerGrid"></div>
+              </div>
+
+              <!-- Primary Fast Submit Button right in the upper iPad Portrait Safe Zone -->
+              <div class="form-group" style="margin-bottom:18px;">
+                <button type="submit" class="btn-submit expense" id="btnSubmitEntryTop">
+                  <span>💾</span>
+                  <span id="btnSubmitEntryTopLabel">บันทึกรายจ่ายทันที (ไม่ต้องกรอกชื่อก็ได้)</span>
+                </button>
               </div>
 
               <!-- Description & Quick Tags -->
@@ -3074,6 +3105,8 @@ button:active,
     const recurGroup = document.getElementById('entryRecurrenceGroup');
     const submitBtn = document.getElementById('btnSubmitEntry');
     const submitLabel = document.getElementById('btnSubmitEntryLabel');
+    const submitBtnTop = document.getElementById('btnSubmitEntryTop');
+    const submitLabelTop = document.getElementById('btnSubmitEntryTopLabel');
 
     if (state.entryMode === 'scheduled') {
       dateLabel.textContent = 'กำหนดชำระภายในวันที่ (Due Date)';
@@ -3081,18 +3114,24 @@ button:active,
       recurGroup.style.display = 'block';
       submitBtn.className = 'btn-submit scheduled';
       submitLabel.textContent = '⏰ บันทึกรายจ่ายล่วงหน้า';
+      if (submitBtnTop) submitBtnTop.className = 'btn-submit scheduled';
+      if (submitLabelTop) submitLabelTop.textContent = '⏰ บันทึกรายจ่ายล่วงหน้าทันที';
     } else if (state.entryMode === 'income') {
       dateLabel.textContent = 'วันที่รับเงิน';
       btnNext7.style.display = 'none';
       recurGroup.style.display = 'none';
       submitBtn.className = 'btn-submit income';
       submitLabel.textContent = '📈 บันทึกรายรับทันที';
+      if (submitBtnTop) submitBtnTop.className = 'btn-submit income';
+      if (submitLabelTop) submitLabelTop.textContent = '📈 บันทึกรายรับทันที (ไม่ต้องกรอกชื่อก็ได้)';
     } else {
       dateLabel.textContent = 'วันที่จ่ายเงิน';
       btnNext7.style.display = 'none';
       recurGroup.style.display = 'none';
       submitBtn.className = 'btn-submit expense';
       submitLabel.textContent = '📉 บันทึกรายจ่ายทันที';
+      if (submitBtnTop) submitBtnTop.className = 'btn-submit expense';
+      if (submitLabelTop) submitLabelTop.textContent = '📉 บันทึกรายจ่ายทันที (ไม่ต้องกรอกชื่อก็ได้)';
     }
 
     const catType = state.entryMode === 'income' ? 'income' : 'expense';
@@ -4852,14 +4891,14 @@ button:active,
     initEvents();
 
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js?v=6').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=7').then(reg => {
         reg.update().catch(() => {});
       }).catch(() => {});
 
       if ('caches' in window) {
         caches.keys().then(keys => {
           keys.forEach(k => {
-            if (k !== 'krapaoflow-v6-homescreen-fix') {
+            if (k !== 'krapaoflow-v7-portrait-fix') {
               caches.delete(k).catch(() => {});
             }
           });

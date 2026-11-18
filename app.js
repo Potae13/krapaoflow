@@ -723,6 +723,8 @@
     const recurGroup = document.getElementById('entryRecurrenceGroup');
     const submitBtn = document.getElementById('btnSubmitEntry');
     const submitLabel = document.getElementById('btnSubmitEntryLabel');
+    const submitBtnTop = document.getElementById('btnSubmitEntryTop');
+    const submitLabelTop = document.getElementById('btnSubmitEntryTopLabel');
 
     if (state.entryMode === 'scheduled') {
       dateLabel.textContent = 'กำหนดชำระภายในวันที่ (Due Date)';
@@ -730,18 +732,24 @@
       recurGroup.style.display = 'block';
       submitBtn.className = 'btn-submit scheduled';
       submitLabel.textContent = '⏰ บันทึกรายจ่ายล่วงหน้า';
+      if (submitBtnTop) submitBtnTop.className = 'btn-submit scheduled';
+      if (submitLabelTop) submitLabelTop.textContent = '⏰ บันทึกรายจ่ายล่วงหน้าทันที';
     } else if (state.entryMode === 'income') {
       dateLabel.textContent = 'วันที่รับเงิน';
       btnNext7.style.display = 'none';
       recurGroup.style.display = 'none';
       submitBtn.className = 'btn-submit income';
       submitLabel.textContent = '📈 บันทึกรายรับทันที';
+      if (submitBtnTop) submitBtnTop.className = 'btn-submit income';
+      if (submitLabelTop) submitLabelTop.textContent = '📈 บันทึกรายรับทันที (ไม่ต้องกรอกชื่อก็ได้)';
     } else {
       dateLabel.textContent = 'วันที่จ่ายเงิน';
       btnNext7.style.display = 'none';
       recurGroup.style.display = 'none';
       submitBtn.className = 'btn-submit expense';
       submitLabel.textContent = '📉 บันทึกรายจ่ายทันที';
+      if (submitBtnTop) submitBtnTop.className = 'btn-submit expense';
+      if (submitLabelTop) submitLabelTop.textContent = '📉 บันทึกรายจ่ายทันที (ไม่ต้องกรอกชื่อก็ได้)';
     }
 
     const catType = state.entryMode === 'income' ? 'income' : 'expense';
@@ -2501,14 +2509,14 @@
     initEvents();
 
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js?v=6').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=7').then(reg => {
         reg.update().catch(() => {});
       }).catch(() => {});
 
       if ('caches' in window) {
         caches.keys().then(keys => {
           keys.forEach(k => {
-            if (k !== 'krapaoflow-v6-homescreen-fix') {
+            if (k !== 'krapaoflow-v7-portrait-fix') {
               caches.delete(k).catch(() => {});
             }
           });

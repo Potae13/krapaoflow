@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="KrapaoFlow" />
   <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
-  <link rel="manifest" href="./manifest.json?v=6" />
+  <link rel="manifest" href="./manifest.json?v=7" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icon.svg" />
-  <link rel="stylesheet" href="./styles.css?v=6" />
+  <link rel="stylesheet" href="./styles.css?v=7" />
 </head>
 <body>
   <!-- Top Header -->
@@ -215,6 +215,14 @@
                   💡 โหมดจัดการประเภท: กดปุ่ม <strong>✏️</strong> เพื่อแก้ไขชื่อ/ไอคอน/สี หรือกด <strong>✕</strong> เพื่อลบประเภทที่คุณไม่ได้ใช้ออกได้เลย
                 </div>
                 <div class="category-grid" id="categoryPickerGrid"></div>
+              </div>
+
+              <!-- Primary Fast Submit Button right in the upper iPad Portrait Safe Zone -->
+              <div class="form-group" style="margin-bottom:18px;">
+                <button type="submit" class="btn-submit expense" id="btnSubmitEntryTop">
+                  <span>💾</span>
+                  <span id="btnSubmitEntryTopLabel">บันทึกรายจ่ายทันที (ไม่ต้องกรอกชื่อก็ได้)</span>
+                </button>
               </div>
 
               <!-- Description & Quick Tags -->
@@ -886,6 +894,6 @@
   <!-- Toast Notifications -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="./app.js?v=6"></script>
+  <script src="./app.js?v=7"></script>
 </body>
 </html>
