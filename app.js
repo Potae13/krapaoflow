@@ -1666,7 +1666,6 @@
     }
 
     modal.classList.add('open');
-    nameInput.focus();
   }
 
   function handleTransactionListAction(e) {
@@ -1987,11 +1986,16 @@
     document.getElementById('entryForm').addEventListener('submit', e => {
       e.preventDefault();
       const amount = Number(document.getElementById('entryAmountInput').value);
-      const title = document.getElementById('entryTitleInput').value.trim();
+      const rawTitle = document.getElementById('entryTitleInput').value.trim();
       const note = document.getElementById('entryNoteInput').value.trim();
       const dateVal = document.getElementById('entryDateInput').value || getTodayStr(0);
 
-      if (!amount || amount <= 0 || !title) return;
+      if (!amount || amount <= 0) {
+        showToast('กรุณาระบุจำนวนเงินก่อนกดบันทึกครับ', '⚠️');
+        return;
+      }
+      const catObj = getCategoryById(state.selectedCategory);
+      const title = rawTitle || (catObj ? catObj.name : 'รายการทั่วไป');
       const now = Date.now();
 
       if (state.entryMode === 'scheduled') {
@@ -2174,7 +2178,7 @@
 
     document.getElementById('scheduledOnlyForm').addEventListener('submit', e => {
       e.preventDefault();
-      const title = document.getElementById('schTitleInput').value.trim();
+      const rawTitle = document.getElementById('schTitleInput').value.trim();
       const amount = Number(document.getElementById('schAmountInput').value);
       const dueDate = document.getElementById('schDueDateInput').value || getTodayStr(7);
       const recurrence = document.getElementById('schRecurrenceSelect').value || 'none';
@@ -2183,7 +2187,12 @@
       const category = document.getElementById('schCategorySelect').value || 'exp_bills';
       const note = document.getElementById('schNoteInput').value.trim();
 
-      if (!title || !amount || amount <= 0) return;
+      if (!amount || amount <= 0) {
+        showToast('กรุณาระบุจำนวนเงินของรายจ่ายล่วงหน้าก่อนครับ', '⚠️');
+        return;
+      }
+      const catObj = getCategoryById(category);
+      const title = rawTitle || (catObj ? catObj.name : 'รายจ่ายล่วงหน้า');
       const now = Date.now();
       state.store.scheduledExpenses.push({
         id: `sch-${now}-${Math.random().toString(36).slice(2, 6)}`,

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'krapaoflow-v4';
+const CACHE_NAME = 'krapaoflow-v5-ipad-fix';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', event => {

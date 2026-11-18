@@ -116,7 +116,7 @@
               </button>
             </div>
 
-            <form id="entryForm">
+            <form id="entryForm" novalidate>
               <!-- Date Selection -->
               <div class="form-group">
                 <div class="form-label-row">
@@ -214,14 +214,13 @@
               <!-- Description & Quick Tags -->
               <div class="form-group">
                 <div class="form-label-row">
-                  <label class="form-label" for="entryTitleInput">ชื่อรายการ / รายละเอียด</label>
+                  <label class="form-label" for="entryTitleInput">ชื่อรายการ / รายละเอียด <small style="font-weight:500;color:var(--text-muted);">(เว้นว่างได้ จะใช้ชื่อหมวดหมู่อัตโนมัติ)</small></label>
                 </div>
                 <input
                   type="text"
                   id="entryTitleInput"
                   class="text-input"
-                  placeholder="เช่น ข้าวมันไก่, กาแฟเย็น, รับค่าจ้างออกแบบ..."
-                  required
+                  placeholder="เว้นว่างได้ หรือระบุ เช่น ข้าวมันไก่, กาแฟเย็น..."
                 />
                 <div class="quick-tags" id="quickTitleSuggestions"></div>
               </div>
@@ -566,7 +565,7 @@
             </div>
           </div>
           <div class="panel-body">
-            <form id="scheduledOnlyForm">
+            <form id="scheduledOnlyForm" novalidate>
               <div class="form-group">
                 <label class="form-label" for="schTitleInput">ชื่อรายการที่ต้องจ่ายล่วงหน้า</label>
                 <input type="text" id="schTitleInput" class="text-input" placeholder="เช่น ค่าเช่าคอนโด, ค่าบัตรเครดิต, ผ่อน iPad..." required style="margin-top:6px;" />
@@ -749,7 +748,7 @@
         <button type="button" id="btnCloseCategoryModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
-        <form id="categoryEditorForm">
+        <form id="categoryEditorForm" novalidate>
           <input type="hidden" id="catEditIdInput" />
 
           <div class="form-group">
@@ -818,7 +817,7 @@
         <button type="button" id="btnCloseEditTxModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
-        <form id="editTxForm">
+        <form id="editTxForm" novalidate>
           <input type="hidden" id="editTxIdInput" />
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="form-group">

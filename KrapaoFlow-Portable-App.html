@@ -68,10 +68,8 @@ body {
   background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
   color: #FFFFFF;
   padding: 12px 24px;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 120;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.22);
 }
 
 .topbar-inner {
@@ -121,14 +119,32 @@ body {
   color: #38BDF8;
 }
 
-/* Primary Navigation Bar */
+/* Primary Navigation Bar (Sticky at top:0 so it never collides with topbar on iPad) */
 .primary-nav-wrap {
   background: #FFFFFF;
   border-bottom: 1px solid var(--border-color);
   position: sticky;
-  top: 64px;
-  z-index: 110;
+  top: 0;
+  z-index: 115;
   box-shadow: var(--shadow-sm);
+}
+
+button,
+.nav-tab-btn,
+.type-tab,
+.cat-chip,
+.quick-amt-btn,
+.numpad-btn,
+.quick-tag,
+.filter-pill,
+.btn-action-sm,
+.btn-pay-now,
+.btn-today,
+.btn-icon-nav,
+.cal-day-cell {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .primary-nav-inner {
@@ -575,25 +591,25 @@ body {
 
 .cat-edit-actions {
   position: absolute;
-  top: -6px;
-  right: -4px;
+  top: -8px;
+  right: -6px;
   display: flex;
-  gap: 3px;
-  z-index: 5;
+  gap: 5px;
+  z-index: 15;
 }
 
 .cat-action-mini {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   background: #FFFFFF;
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
 }
 
 .cat-action-mini.del {
@@ -1543,7 +1559,7 @@ body {
               </button>
             </div>
 
-            <form id="entryForm">
+            <form id="entryForm" novalidate>
               <!-- Date Selection -->
               <div class="form-group">
                 <div class="form-label-row">
@@ -1641,14 +1657,13 @@ body {
               <!-- Description & Quick Tags -->
               <div class="form-group">
                 <div class="form-label-row">
-                  <label class="form-label" for="entryTitleInput">ชื่อรายการ / รายละเอียด</label>
+                  <label class="form-label" for="entryTitleInput">ชื่อรายการ / รายละเอียด <small style="font-weight:500;color:var(--text-muted);">(เว้นว่างได้ จะใช้ชื่อหมวดหมู่อัตโนมัติ)</small></label>
                 </div>
                 <input
                   type="text"
                   id="entryTitleInput"
                   class="text-input"
-                  placeholder="เช่น ข้าวมันไก่, กาแฟเย็น, รับค่าจ้างออกแบบ..."
-                  required
+                  placeholder="เว้นว่างได้ หรือระบุ เช่น ข้าวมันไก่, กาแฟเย็น..."
                 />
                 <div class="quick-tags" id="quickTitleSuggestions"></div>
               </div>
@@ -1993,7 +2008,7 @@ body {
             </div>
           </div>
           <div class="panel-body">
-            <form id="scheduledOnlyForm">
+            <form id="scheduledOnlyForm" novalidate>
               <div class="form-group">
                 <label class="form-label" for="schTitleInput">ชื่อรายการที่ต้องจ่ายล่วงหน้า</label>
                 <input type="text" id="schTitleInput" class="text-input" placeholder="เช่น ค่าเช่าคอนโด, ค่าบัตรเครดิต, ผ่อน iPad..." required style="margin-top:6px;" />
@@ -2176,7 +2191,7 @@ body {
         <button type="button" id="btnCloseCategoryModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
-        <form id="categoryEditorForm">
+        <form id="categoryEditorForm" novalidate>
           <input type="hidden" id="catEditIdInput" />
 
           <div class="form-group">
@@ -2245,7 +2260,7 @@ body {
         <button type="button" id="btnCloseEditTxModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
-        <form id="editTxForm">
+        <form id="editTxForm" novalidate>
           <input type="hidden" id="editTxIdInput" />
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="form-group">
@@ -3977,7 +3992,6 @@ body {
     }
 
     modal.classList.add('open');
-    nameInput.focus();
   }
 
   function handleTransactionListAction(e) {
@@ -4298,11 +4312,16 @@ body {
     document.getElementById('entryForm').addEventListener('submit', e => {
       e.preventDefault();
       const amount = Number(document.getElementById('entryAmountInput').value);
-      const title = document.getElementById('entryTitleInput').value.trim();
+      const rawTitle = document.getElementById('entryTitleInput').value.trim();
       const note = document.getElementById('entryNoteInput').value.trim();
       const dateVal = document.getElementById('entryDateInput').value || getTodayStr(0);
 
-      if (!amount || amount <= 0 || !title) return;
+      if (!amount || amount <= 0) {
+        showToast('กรุณาระบุจำนวนเงินก่อนกดบันทึกครับ', '⚠️');
+        return;
+      }
+      const catObj = getCategoryById(state.selectedCategory);
+      const title = rawTitle || (catObj ? catObj.name : 'รายการทั่วไป');
       const now = Date.now();
 
       if (state.entryMode === 'scheduled') {
@@ -4485,7 +4504,7 @@ body {
 
     document.getElementById('scheduledOnlyForm').addEventListener('submit', e => {
       e.preventDefault();
-      const title = document.getElementById('schTitleInput').value.trim();
+      const rawTitle = document.getElementById('schTitleInput').value.trim();
       const amount = Number(document.getElementById('schAmountInput').value);
       const dueDate = document.getElementById('schDueDateInput').value || getTodayStr(7);
       const recurrence = document.getElementById('schRecurrenceSelect').value || 'none';
@@ -4494,7 +4513,12 @@ body {
       const category = document.getElementById('schCategorySelect').value || 'exp_bills';
       const note = document.getElementById('schNoteInput').value.trim();
 
-      if (!title || !amount || amount <= 0) return;
+      if (!amount || amount <= 0) {
+        showToast('กรุณาระบุจำนวนเงินของรายจ่ายล่วงหน้าก่อนครับ', '⚠️');
+        return;
+      }
+      const catObj = getCategoryById(category);
+      const title = rawTitle || (catObj ? catObj.name : 'รายจ่ายล่วงหน้า');
       const now = Date.now();
       state.store.scheduledExpenses.push({
         id: `sch-${now}-${Math.random().toString(36).slice(2, 6)}`,
