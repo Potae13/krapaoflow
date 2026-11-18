@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="KrapaoFlow" />
+  <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Top Header -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-logo">👛</div>
+        <div>
+          <div class="brand-title">
+            KrapaoFlow
+            <span class="brand-badge">พร้อมใช้งานจริง • Auto Wi-Fi Sync</span>
+          </div>
+          <div style="font-size:0.75rem;color:#94A3B8;">
+            ทำงานแยกอิสระเข้าจากที่ไหนก็ได้ (iPad / MacBook) • ซิงค์ข้อมูลล่าสุดอัตโนมัติเมื่อต่อ Wi-Fi เดียวกัน
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Connection & Same Wi-Fi Auto-Sync Status Pill -->
+      <button class="wifi-sync-pill" id="btnTopSyncPill" title="คลิกเพื่อเปิดหมวดการเชื่อมต่อและตั้งค่าการซิงค์ Wi-Fi">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncStatusText">กำลังตรวจสอบเครือข่าย...</span>
+        <span style="opacity:0.8;font-size:0.74rem;" id="syncPeerCountBadge"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Primary Navigation Bar -->
+  <nav class="primary-nav-wrap" aria-label="เมนูหลักแยกหมวดหมู่">
+    <div class="primary-nav-inner">
+      <div class="nav-tabs" role="tablist">
+        <button type="button" class="nav-tab-btn active" data-nav-view="record">
+          <span>⚡</span>
+          <span>บันทึกด่วน</span>
+        </button>
+        <button type="button" class="nav-tab-btn" data-nav-view="dashboard">
+          <span>📊</span>
+          <span>แดชบอร์ด &amp; กราฟ</span>
+        </button>
+        <button type="button" class="nav-tab-btn" data-nav-view="transactions">
+          <span>📋</span>
+          <span>รายการรับ-จ่าย</span>
+          <span class="nav-tab-badge" id="navTxCountBadge">0</span>
+        </button>
+        <button type="button" class="nav-tab-btn" data-nav-view="upcoming">
+          <span>⏰</span>
+          <span>รายจ่ายล่วงหน้า &amp; ประจำ</span>
+          <span class="nav-tab-badge" id="navUpcomingCountBadge">0</span>
+        </button>
+        <button type="button" class="nav-tab-btn" data-nav-view="sync">
+          <span>📡</span>
+          <span>การเชื่อมต่อ &amp; ซิงค์</span>
+        </button>
+      </div>
+
+      <!-- Global Date Picker & "📍 วันนี้" Button -->
+      <div class="date-quick-bar">
+        <button class="btn-icon-nav" id="btnPrevDate" title="วันก่อนหน้า">◀</button>
+        <div class="date-display-box">
+          <span>📅</span>
+          <span class="date-label-thai" id="selectedDateThaiLabel">วันนี้</span>
+          <input type="date" id="mainDatePicker" class="date-input-native" aria-label="เลือกวันที่" />
+        </div>
+        <button class="btn-icon-nav" id="btnNextDate" title="วันถัดไป">▶</button>
+        <button class="btn-today is-today" id="btnGoToday">
+          <span>📍</span>
+          <span id="btnTodayLabel">วันนี้</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-container">
+
+    <!-- =================================================================
+         VIEW 1: บันทึกด่วน (QUICK RECORD VIEW)
+         ================================================================= -->
+    <section class="view-section active" id="view-record" aria-label="หมวดบันทึกรายรับรายจ่ายด่วน">
+      <div class="record-view-grid">
+        <!-- Left: Quick Entry Form -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>⚡</span>
+              <span>บันทึกรายการรับ-จ่ายด่วน</span>
+            </div>
+            <button type="button" class="quick-amt-btn" id="btnToggleNumpad" style="flex:0;white-space:nowrap;">
+              🔢 แป้นตัวเลขสัมผัส (iPad)
+            </button>
+          </div>
+
+          <div class="panel-body">
+            <!-- Entry Type Tabs -->
+            <div class="entry-type-tabs" role="tablist">
+              <button type="button" class="type-tab active-expense" id="tabExpense" data-entry-type="expense">
+                📉 รายจ่าย
+              </button>
+              <button type="button" class="type-tab" id="tabIncome" data-entry-type="income">
+                📈 รายรับ
+              </button>
+              <button type="button" class="type-tab" id="tabScheduled" data-entry-type="scheduled">
+                ⏰ รายจ่ายล่วงหน้า
+              </button>
+            </div>
+
+            <form id="entryForm">
+              <!-- Date Selection -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label" id="entryDateLabel" for="entryDateInput">วันที่ของรายการ</label>
+                  <div style="display:flex;gap:6px;">
+                    <button type="button" class="quick-tag" id="btnEntryToday">📍 วันนี้</button>
+                    <button type="button" class="quick-tag" id="btnEntryTomorrow">+1 พรุ่งนี้</button>
+                    <button type="button" class="quick-tag" id="btnEntryNext7Days" style="display:none;">+7 วัน</button>
+                  </div>
+                </div>
+                <input type="date" id="entryDateInput" class="text-input" required />
+              </div>
+
+              <!-- Recurrence Option (Visible when Scheduled mode is chosen) -->
+              <div class="form-group" id="entryRecurrenceGroup" style="display:none;background:#EEF2FF;padding:12px;border-radius:12px;border:1px solid #C7D2FE;">
+                <label class="form-label" for="entryRecurrenceSelect" style="color:#312E81;">🔁 รูปแบบการเกิดซ้ำ (รายการประจำอัตโนมัติ):</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+                  <select id="entryRecurrenceSelect" class="select-filter">
+                    <option value="none">ครั้งเดียว (ไม่เกิดซ้ำ)</option>
+                    <option value="monthly">🔁 ประจำทุกเดือน (สร้างเดือนถัดไปอัตโนมัติ)</option>
+                    <option value="weekly">🔁 ประจำทุกสัปดาห์</option>
+                    <option value="installment">💳 ผ่อนชำระ (ระบุงวด เช่น 1/10)</option>
+                  </select>
+                  <div id="entryInstallmentWrap" style="display:none;gap:6px;align-items:center;">
+                    <input type="number" id="entryInstCurrent" class="text-input" placeholder="งวดที่" min="1" value="1" style="padding:8px;" />
+                    <span>/</span>
+                    <input type="number" id="entryInstTotal" class="text-input" placeholder="ทั้งหมด" min="2" value="10" style="padding:8px;" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Amount Input -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label" for="entryAmountInput">จำนวนเงิน (บาท)</label>
+                  <span style="font-size:0.75rem;color:var(--text-secondary);">กดปุ่มลัดเพื่อบวกเพิ่มได้</span>
+                </div>
+                <div class="amount-input-wrap">
+                  <span class="currency-prefix">฿</span>
+                  <input
+                    type="number"
+                    id="entryAmountInput"
+                    class="amount-input"
+                    placeholder="0.00"
+                    step="any"
+                    min="0.01"
+                    inputmode="decimal"
+                    required
+                  />
+                </div>
+                <div class="quick-amounts">
+                  <button type="button" class="quick-amt-btn" data-add-amt="50">+50</button>
+                  <button type="button" class="quick-amt-btn" data-add-amt="100">+100</button>
+                  <button type="button" class="quick-amt-btn" data-add-amt="500">+500</button>
+                  <button type="button" class="quick-amt-btn" data-add-amt="1000">+1,000</button>
+                  <button type="button" class="quick-amt-btn" id="btnClearAmount" style="color:#E11D48;">ล้าง</button>
+                </div>
+
+                <!-- Touch Numpad -->
+                <div class="numpad-grid" id="ipadNumpad" style="display:none;">
+                  <button type="button" class="numpad-btn" data-numpad="7">7</button>
+                  <button type="button" class="numpad-btn" data-numpad="8">8</button>
+                  <button type="button" class="numpad-btn" data-numpad="9">9</button>
+                  <button type="button" class="numpad-btn" data-numpad="DEL" style="color:#E11D48;">⌫</button>
+                  <button type="button" class="numpad-btn" data-numpad="4">4</button>
+                  <button type="button" class="numpad-btn" data-numpad="5">5</button>
+                  <button type="button" class="numpad-btn" data-numpad="6">6</button>
+                  <button type="button" class="numpad-btn" data-numpad="00">00</button>
+                  <button type="button" class="numpad-btn" data-numpad="1">1</button>
+                  <button type="button" class="numpad-btn" data-numpad="2">2</button>
+                  <button type="button" class="numpad-btn" data-numpad="3">3</button>
+                  <button type="button" class="numpad-btn" data-numpad="0">0</button>
+                </div>
+              </div>
+
+              <!-- Category Picker with Full Add / Edit / Delete Support -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label">เลือกประเภทของรายการ</label>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="quick-tag" id="btnOpenAddCategoryModal" style="background:#EEF2FF;color:#4F46E5;border-color:#A5B4FC;font-weight:700;">
+                      + เพิ่มประเภทใหม่
+                    </button>
+                    <button type="button" class="quick-tag" id="btnToggleManageCategories" style="color:#E11D48;border-color:#FECDD3;background:#FFF1F2;">
+                      ⚙️ แก้ไข / ลบประเภทที่ไม่ได้ใช้
+                    </button>
+                  </div>
+                </div>
+                <div id="manageCatHintBanner" style="display:none;background:#FFF1F2;border:1px solid #FECDD3;color:#BE123C;padding:8px 12px;border-radius:10px;font-size:0.78rem;margin-bottom:8px;font-weight:600;">
+                  💡 โหมดจัดการประเภท: กดปุ่ม <strong>✏️</strong> เพื่อแก้ไขชื่อ/ไอคอน/สี หรือกด <strong>✕</strong> เพื่อลบประเภทที่คุณไม่ได้ใช้ออกได้เลย
+                </div>
+                <div class="category-grid" id="categoryPickerGrid"></div>
+              </div>
+
+              <!-- Description & Quick Tags -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label" for="entryTitleInput">ชื่อรายการ / รายละเอียด</label>
+                </div>
+                <input
+                  type="text"
+                  id="entryTitleInput"
+                  class="text-input"
+                  placeholder="เช่น ข้าวมันไก่, กาแฟเย็น, รับค่าจ้างออกแบบ..."
+                  required
+                />
+                <div class="quick-tags" id="quickTitleSuggestions"></div>
+              </div>
+
+              <!-- Slip Attachment & Smart Slip Auto-Fill -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label">🧾 แนบรูปสลิปโอนเงิน / สแกนดึงยอดจากสลิป (ตัวเลือกเสริม)</label>
+                </div>
+                <div class="slip-upload-box">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <img id="entrySlipPreviewImg" class="slip-preview-thumb" style="display:none;" alt="ตัวอย่างสลิป" />
+                    <div>
+                      <div style="font-size:0.8rem;font-weight:700;color:var(--text-main);" id="entrySlipStatusText">
+                        เลือกรูปสลิป หรือกดวางรูป (Cmd+V) เพื่อแนบและดึงยอดเงิน
+                      </div>
+                      <div style="font-size:0.72rem;color:var(--text-secondary);">
+                        รองรับการแนบรูปสลิปและซิงค์ข้าม Wi-Fi
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px;">
+                    <label class="quick-tag" style="background:#0F172A;color:#FFF;border:none;cursor:pointer;">
+                      📷 เลือกรูปสลิป
+                      <input type="file" id="entrySlipFileInput" accept="image/*" style="display:none;" />
+                    </label>
+                    <button type="button" class="quick-tag" id="btnRemoveEntrySlip" style="display:none;color:#E11D48;">✕ ลบรูป</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Optional Note -->
+              <div class="form-group">
+                <input
+                  type="text"
+                  id="entryNoteInput"
+                  class="text-input"
+                  placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"
+                />
+              </div>
+
+              <button type="submit" class="btn-submit expense" id="btnSubmitEntry">
+                <span>💾</span>
+                <span id="btnSubmitEntryLabel">บันทึกรายจ่ายทันที</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: Clean Today/Selected Date Summary + 1-Tap Duplicate & Edit -->
+        <div>
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span>📌</span>
+                <span id="quickRecordSideTitle">รายการของวันที่เลือก</span>
+              </div>
+              <span style="font-size:0.75rem;color:var(--text-secondary);">กด "📋 ซ้ำ" เพื่อบันทึกซ้ำในคลิกเดียว</span>
+            </div>
+            <div class="panel-body">
+              <div class="mini-day-summary">
+                <div class="mini-stat-box inc">
+                  <div style="font-size:0.78rem;color:#047857;font-weight:700;">รายรับวันที่เลือก</div>
+                  <div style="font-size:1.4rem;font-weight:800;color:#059669;" id="quickDayIncomeVal">+฿0</div>
+                </div>
+                <div class="mini-stat-box exp">
+                  <div style="font-size:0.78rem;color:#BE123C;font-weight:700;">รายจ่ายวันที่เลือก</div>
+                  <div style="font-size:1.4rem;font-weight:800;color:#E11D48;" id="quickDayExpenseVal">-฿0</div>
+                </div>
+              </div>
+
+              <div id="quickRecentListContainer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         VIEW 2: แดชบอร์ด & กราฟวิเคราะห์ (DASHBOARD & CHARTS VIEW)
+         ================================================================= -->
+    <section class="view-section" id="view-dashboard" aria-label="หมวดแดชบอร์ดและกราฟวิเคราะห์">
+      <!-- Row 1: 4 Core KPI Cards -->
+      <div class="dashboard-grid">
+        <div class="kpi-card income-card">
+          <div>
+            <div class="kpi-header">
+              <span class="kpi-title">📈 วันนี้รับเท่าไหร่</span>
+              <span class="kpi-badge income" id="todayIncomeCountBadge">0 รายการ</span>
+            </div>
+            <div class="kpi-amount income" id="todayIncomeAmount">+฿0</div>
+          </div>
+          <div class="kpi-sub">
+            <span id="selectedDayIncomeCompare">ข้อมูลวันนี้</span>
+            <span id="monthIncomeMini">เดือนนี้: +฿0</span>
+          </div>
+        </div>
+
+        <div class="kpi-card expense-card">
+          <div>
+            <div class="kpi-header">
+              <span class="kpi-title">📉 วันนี้จ่ายไปเท่าไหร่</span>
+              <span class="kpi-badge expense" id="todayExpenseCountBadge">0 รายการ</span>
+            </div>
+            <div class="kpi-amount expense" id="todayExpenseAmount">-฿0</div>
+          </div>
+          <div class="kpi-sub">
+            <span id="selectedDayExpenseCompare">ข้อมูลวันนี้</span>
+            <span id="monthExpenseMini">เดือนนี้: -฿0</span>
+          </div>
+        </div>
+
+        <div class="kpi-card balance-card">
+          <div>
+            <div class="kpi-header">
+              <span class="kpi-title">💰 เงินคงเหลือพร้อมใช้</span>
+              <span class="kpi-badge balance" id="todayNetBadge">สุทธิวันนี้ ฿0</span>
+            </div>
+            <div class="kpi-amount balance" id="totalAvailableBalance">฿0</div>
+          </div>
+          <div class="kpi-sub">
+            <span>หักรายจ่ายจริงทั้งหมดแล้ว</span>
+            <span id="totalTxCountLabel">0 รายการ</span>
+          </div>
+        </div>
+
+        <div class="kpi-card target-card">
+          <div>
+            <div class="kpi-header">
+              <span class="kpi-title">🎯 ยอดที่ต้องหาก่อนกำหนด</span>
+              <span class="kpi-badge urgent" id="targetDaysRemainingBadge">อีก 7 วัน</span>
+            </div>
+            <div class="kpi-amount target" id="targetNeededAmount">฿0</div>
+          </div>
+          <div class="kpi-sub">
+            <span id="targetDueDateSubLabel">ก่อนวันที่ -</span>
+            <span id="targetDailyRateLabel">เฉลี่ย ฿0/วัน</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Daily Cashflow Bar Chart + Category Donut Chart -->
+      <div class="charts-grid-top">
+        <div class="chart-card" style="margin-bottom:0;">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">📊 กราฟเปรียบเทียบ รายรับ vs รายจ่าย รายวัน</div>
+              <div class="chart-subtitle">คลิกที่แท่งกราฟเพื่อดูข้อมูลของวันนั้น • มีเส้นประแสดงค่าเฉลี่ยรายจ่ายต่อวัน</div>
+            </div>
+            <div class="segmented-control">
+              <button type="button" class="filter-pill active" data-chart-days="7">7 วันล่าสุด</button>
+              <button type="button" class="filter-pill" data-chart-days="14">14 วันล่าสุด</button>
+            </div>
+          </div>
+          <div id="dailyBarChartContainer" style="width:100%;min-height:245px;"></div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom:0;">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">🍩 กราฟสัดส่วนแยกตามประเภท</div>
+              <div class="chart-subtitle" id="donutPeriodSubtitle">สรุปสัดส่วนประจำเดือน</div>
+            </div>
+            <div class="segmented-control">
+              <button type="button" class="filter-pill active expense-only" data-donut-type="expense">รายจ่าย</button>
+              <button type="button" class="filter-pill income-only" data-donut-type="income">รายรับ</button>
+            </div>
+          </div>
+
+          <div class="donut-layout">
+            <div class="donut-svg-wrap">
+              <div id="donutSvgContainer"></div>
+              <div class="donut-center-label">
+                <span style="font-size:0.72rem;color:var(--text-secondary);" id="donutCenterTitle">รวมรายจ่าย</span>
+                <strong style="font-size:1.05rem;font-weight:800;" id="donutCenterAmount">฿0</strong>
+              </div>
+            </div>
+            <div class="donut-rank-list" id="donutRankList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Monthly Calendar Heatmap & Month-over-Month Trend Chart -->
+      <div class="charts-grid-top">
+        <div class="chart-card" style="margin-bottom:0;">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">🗓️ ปฏิทินรายเดือน (Calendar Heatmap)</div>
+              <div class="chart-subtitle" id="calendarHeatmapSubtitle">แสดงยอด +รับ / -จ่าย ในแต่ละวันของเดือน คลิกที่ช่องวันเพื่อเลือกดูได้ทันที</div>
+            </div>
+            <input type="month" id="dashMonthPicker" class="date-input-native" />
+          </div>
+          <div class="calendar-heatmap-grid" id="calendarHeatmapContainer"></div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom:0;">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">📈 กราฟเปรียบเทียบรายเดือนย้อนหลัง (Month-over-Month)</div>
+              <div class="chart-subtitle">เปรียบเทียบ รายรับ vs รายจ่าย ย้อนหลัง 6 เดือน</div>
+            </div>
+          </div>
+          <div id="monthlyTrendChartContainer" style="width:100%;min-height:245px;"></div>
+        </div>
+      </div>
+
+      <!-- Row 4: Target Shortfall Gauge Chart -->
+      <div class="chart-card" style="margin-top:20px;">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">⏳ กราฟวิเคราะห์ยอดที่ต้องหาให้ได้ก่อนวันที่กำหนด &amp; ความพร้อมของเงินทุน</div>
+            <div class="chart-subtitle">เปรียบเทียบเงินคงเหลือปัจจุบัน กับยอดรวมรายจ่ายล่วงหน้าที่ต้องชำระก่อนวันที่กำหนด</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label style="font-size:0.82rem;font-weight:700;">
+              ก่อนวันที่:
+              <input type="date" id="targetCutoffDateInput" class="date-input-native" style="margin-left:4px;" />
+            </label>
+            <div class="segmented-control">
+              <button type="button" class="filter-pill active" id="btnModeNetShortfall">หักเงินคงเหลือที่มี</button>
+              <button type="button" class="filter-pill" id="btnModeGrossUpcoming">ยอดจ่ายล่วงหน้าเต็ม</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="target-chart-grid">
+          <div id="targetGaugeSvgContainer" style="text-align:center;"></div>
+          <div>
+            <div class="planner-metrics">
+              <div class="planner-metric-box">
+                <div class="pm-label">รวมรายจ่ายล่วงหน้าก่อนวันกำหนด</div>
+                <div class="pm-val" id="pmUpcomingTotal">฿0</div>
+              </div>
+              <div class="planner-metric-box">
+                <div class="pm-label">เงินคงเหลือที่มีช่วยจ่ายได้ตอนนี้</div>
+                <div class="pm-val" style="color:var(--income-color);" id="pmCurrentAvailable">฿0</div>
+              </div>
+              <div class="planner-metric-box highlight">
+                <div class="pm-label" id="pmShortfallTitle">ยอดที่ต้องหาเพิ่มให้ทันกำหนด</div>
+                <div class="pm-val" style="color:#4F46E5;" id="pmShortfallValue">฿0</div>
+              </div>
+            </div>
+
+            <div style="background:#F8FAFC;border:1px solid var(--border-color);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+              <div>
+                <div style="font-size:0.82rem;font-weight:700;color:var(--text-main);" id="targetCoverageText">ความพร้อมของเงินทุน: 100%</div>
+                <div style="font-size:0.8rem;color:#4F46E5;font-weight:700;" id="targetActionHintText">ยังไม่มีรายจ่ายล่วงหน้าที่ค้างชำระ</div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="quick-amt-btn" id="btnExportCsvFromDash" style="flex:0;white-space:nowrap;">
+                  📊 ส่งออก Excel / CSV
+                </button>
+                <button type="button" class="quick-amt-btn" id="btnPrintReportFromDash" style="flex:0;white-space:nowrap;">
+                  🖨️ พิมพ์สรุป PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         VIEW 3: รายการรับ-จ่าย (TRANSACTIONS HISTORY & EXPORT VIEW)
+         ================================================================= -->
+    <section class="view-section" id="view-transactions" aria-label="หมวดรายการรายรับรายจ่ายทั้งหมด">
+      <div class="panel-card">
+        <div class="filter-toolbar">
+          <div class="filter-row-top">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div class="segmented-control" role="group" aria-label="เลือกแสดงรายวันหรือรายเดือน">
+                <button type="button" class="filter-pill active" id="btnViewDaily" data-period="daily">
+                  📅 แสดงรายวัน
+                </button>
+                <button type="button" class="filter-pill" id="btnViewMonthly" data-period="monthly">
+                  🗓️ แสดงรายเดือน
+                </button>
+              </div>
+              <input type="month" id="monthPickerInput" class="date-input-native" aria-label="เลือกเดือน" />
+            </div>
+
+            <div class="segmented-control" role="group" aria-label="กรองประเภทรายรับรายจ่าย">
+              <button type="button" class="filter-pill active" data-type-filter="all">ทั้งหมด</button>
+              <button type="button" class="filter-pill expense-only" data-type-filter="expense">📉 เฉพาะรายจ่าย</button>
+              <button type="button" class="filter-pill income-only" data-type-filter="income">📈 เฉพาะรายรับ</button>
+            </div>
+          </div>
+
+          <div class="filter-row-bottom">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="searchTxInput"
+                class="search-input"
+                placeholder="ค้นหาชื่อรายการ, หมายเหตุ หรืออุปกรณ์ที่บันทึก..."
+              />
+            </div>
+
+            <select id="categoryFilterSelect" class="select-filter" aria-label="กรองตามประเภทหมวดหมู่">
+              <option value="all">🏷️ ทุกประเภทหมวดหมู่</option>
+            </select>
+
+            <button type="button" class="quick-amt-btn" id="btnExportCsvTx" style="flex:0;white-space:nowrap;background:#ECFDF5;color:#047857;border-color:#A7F3D0;">
+              📊 ส่งออก Excel (.CSV)
+            </button>
+            <button type="button" class="quick-amt-btn" id="btnPrintPdfTx" style="flex:0;white-space:nowrap;">
+              🖨️ พิมพ์สรุป / PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="period-summary-strip">
+          <div class="ps-item">
+            <span class="ps-label" id="periodIncomeLabel">รายรับ</span>
+            <span class="ps-val inc" id="periodIncomeVal">+฿0</span>
+          </div>
+          <div class="ps-item">
+            <span class="ps-label" id="periodExpenseLabel">รายจ่าย</span>
+            <span class="ps-val exp" id="periodExpenseVal">-฿0</span>
+          </div>
+          <div class="ps-item">
+            <span class="ps-label">คงเหลือสุทธิในช่วงที่เลือก</span>
+            <span class="ps-val net" id="periodNetVal">฿0</span>
+          </div>
+        </div>
+
+        <div class="tx-list-container" id="transactionsListContainer"></div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         VIEW 4: รายจ่ายล่วงหน้า & รายการประจำ (UPCOMING & RECURRING VIEW)
+         ================================================================= -->
+    <section class="view-section" id="view-upcoming" aria-label="หมวดกำหนดรายจ่ายล่วงหน้าและรายการประจำ">
+      <div class="record-view-grid">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>⏰</span>
+              <span>เพิ่มรายจ่ายล่วงหน้า / รายการประจำอัตโนมัติ</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <form id="scheduledOnlyForm">
+              <div class="form-group">
+                <label class="form-label" for="schTitleInput">ชื่อรายการที่ต้องจ่ายล่วงหน้า</label>
+                <input type="text" id="schTitleInput" class="text-input" placeholder="เช่น ค่าเช่าคอนโด, ค่าบัตรเครดิต, ผ่อน iPad..." required style="margin-top:6px;" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="schAmountInput">จำนวนเงินที่ต้องเตรียม (บาท)</label>
+                <input type="number" id="schAmountInput" class="text-input" placeholder="0.00" step="any" min="0.01" required style="margin-top:6px;font-size:1.2rem;font-weight:800;" />
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label" for="schDueDateInput">กำหนดชำระก่อนวันที่ (Due Date)</label>
+                  <div style="display:flex;gap:6px;">
+                    <button type="button" class="quick-tag" data-sch-offset="3">อีก 3 วัน</button>
+                    <button type="button" class="quick-tag" data-sch-offset="7">อีก 7 วัน</button>
+                    <button type="button" class="quick-tag" data-sch-offset="15">อีก 15 วัน</button>
+                    <button type="button" class="quick-tag" data-sch-offset="30">อีก 1 เดือน</button>
+                  </div>
+                </div>
+                <input type="date" id="schDueDateInput" class="text-input" required />
+              </div>
+
+              <!-- Recurrence & Installment Tracker -->
+              <div class="form-group">
+                <label class="form-label" for="schRecurrenceSelect">🔁 ความถี่การเกิดซ้ำอัตโนมัติ</label>
+                <select id="schRecurrenceSelect" class="select-filter" style="width:100%;margin-top:6px;">
+                  <option value="none">ครั้งเดียว (ไม่เกิดซ้ำ)</option>
+                  <option value="monthly" selected>🔁 ประจำทุกเดือน (เมื่อกดจ่ายแล้ว จะสร้างงวดเดือนหน้าให้อัตโนมัติ)</option>
+                  <option value="weekly">🔁 ประจำทุกสัปดาห์ (สร้างสัปดาห์หน้าอัตโนมัติ)</option>
+                  <option value="installment">💳 ผ่อนชำระเป็นงวด (เช่น งวดที่ 1/10)</option>
+                </select>
+                <div id="schInstallmentFields" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+                  <div>
+                    <label class="form-label">งวดปัจจุบันที่กำลังจะจ่าย</label>
+                    <input type="number" id="schInstCurInput" class="text-input" min="1" value="1" />
+                  </div>
+                  <div>
+                    <label class="form-label">จำนวนงวดทั้งหมด</label>
+                    <input type="number" id="schInstTotalInput" class="text-input" min="2" value="10" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="schCategorySelect">หมวดหมู่รายจ่าย</label>
+                <select id="schCategorySelect" class="select-filter" style="width:100%;margin-top:6px;"></select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="schNoteInput">หมายเหตุ</label>
+                <input type="text" id="schNoteInput" class="text-input" placeholder="เช่น ห้ามจ่ายเกินกำหนด..." style="margin-top:6px;" />
+              </div>
+
+              <button type="submit" class="btn-submit scheduled">
+                <span>⏰</span>
+                <span>บันทึกรายจ่ายล่วงหน้า</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>📋</span>
+              <span>รายการรายจ่ายล่วงหน้า &amp; รายการประจำทั้งหมด</span>
+            </div>
+            <span style="font-size:0.78rem;color:var(--text-secondary);">กด "✓ จ่ายแล้ว" จะบันทึกจ่ายจริงและสร้างงวดถัดไปให้อัตโนมัติ</span>
+          </div>
+          <div class="panel-body">
+            <div class="scheduled-list" id="scheduledExpensesList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         VIEW 5: การเชื่อมต่อ & ซิงค์ข้อมูล (SYNC, ROOM CODE & MAC AUTOSTART)
+         ================================================================= -->
+    <section class="view-section" id="view-sync" aria-label="หมวดการเชื่อมต่อและซิงค์ข้อมูลผ่าน Wi-Fi เดียวกัน">
+      <div class="sync-architecture-grid">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>🌍</span>
+              <span>ต่างคนต่างมีหน่วยความจำของตัวเอง + ซิงค์อัตโนมัติเมื่อต่อ Wi-Fi เดียวกัน</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:14px;padding:16px;margin-bottom:16px;">
+              <div style="font-weight:800;color:#1E1B4B;margin-bottom:6px;">
+                🧠 1. ต่างคนต่างมีหน่วยความจำในเครื่องของตัวเอง (ปิด Mac ก็ใช้บน iPad ได้)
+              </div>
+              <p style="font-size:0.83rem;color:#312E81;margin-bottom:12px;">
+                <strong>iPad</strong> เก็บข้อมูลในหน่วยความจำของ iPad เอง และ <strong>MacBook</strong> ก็เก็บในหน่วยความจำของ MacBook เอง ไม่ต้องพึ่งพากันเวลาใช้งานข้างนอก สามารถดาวน์โหลดไฟล์แอปพกพาด้านล่างเก็บไว้ในแอป <strong>Files (ไฟล์)</strong> บน iPad หรือเปิดผ่านลิงก์ Cloud HTTPS เพื่อใช้งานตอนปิดเครื่อง Mac ได้ทันที
+              </p>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <a href="./KrapaoFlow-Portable-App.html" download="KrapaoFlow-Portable-App.html" class="quick-amt-btn" style="text-decoration:none;background:#4F46E5;color:#FFF;border:none;text-align:center;">
+                  📥 ดาวน์โหลดไฟล์แอปอิสระ (เก็บไว้ในเครื่อง iPad / Mac ใช้ได้แม้ปิดอีกเครื่อง)
+                </a>
+                <button type="button" class="quick-amt-btn" id="btnExportJsonBackup">
+                  💾 สำรองข้อมูล (.JSON)
+                </button>
+              </div>
+            </div>
+
+            <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:16px;margin-bottom:16px;">
+              <div style="font-weight:800;color:#065F46;margin-bottom:6px;">
+                🔄 2. ระบบตรวจจับ "Wi-Fi เดียวกัน" แบบ Peer-to-Peer (ไม่ต้องเปิดเซิร์ฟเวอร์ ไม่ต้องก๊อปปี้ IP)
+              </div>
+              <p style="font-size:0.82rem;color:#047857;margin-bottom:10px;">
+                ระบบตรวจสอบ <strong>รหัสเกตเวย์ของวง Wi-Fi (Wi-Fi Public IP Signature)</strong> อัตโนมัติ เมื่อทั้ง iPad และ MacBook เชื่อมต่อ <strong>Wi-Fi วงเดียวกัน</strong> (รหัสวง Wi-Fi ตรงกัน + รหัสห้องตรงกัน) ทั้งสองเครื่องจะซิงค์ข้อมูลจากหน่วยความจำของแต่ละฝั่งให้เป็นข้อมูลล่าสุดตรงกันทันที
+              </p>
+              <div style="display:flex;gap:8px;align-items:flex-end;">
+                <div style="flex:1;">
+                  <label class="form-label" style="color:#065F46;">รหัสห้องซิงค์ประจำตัวของคุณ (ตั้งให้ตรงกันทั้ง iPad และ MacBook):</label>
+                  <input type="text" id="syncRoomCodeInput" class="text-input" value="KP-8899" style="font-weight:800;margin-top:6px;" />
+                </div>
+                <button type="button" class="quick-amt-btn" id="btnSaveSyncHubUrl" style="flex:0;white-space:nowrap;height:42px;background:#059669;color:#FFF;border:none;padding:0 18px;">
+                  บันทึกรหัสห้อง &amp; ซิงค์ทันที
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>📡</span>
+              <span>สถานะวง Wi-Fi เดียวกัน &amp; จัดการข้อมูล</span>
+            </div>
+            <button type="button" class="quick-tag" id="btnForceSyncNow" style="background:#059669;color:#FFF;border:none;">
+              🔄 ซิงค์เดี๋ยวนี้
+            </button>
+          </div>
+          <div class="panel-body">
+            <div style="display:grid;grid-template-columns:148px 1fr;gap:16px;align-items:center;background:var(--bg-subtle);padding:14px;border-radius:14px;border:1px solid var(--border-color);margin-bottom:16px;">
+              <div style="background:#FFF;padding:8px;border-radius:10px;border:1px solid var(--border-color);text-align:center;">
+                <div id="qrCodeSvgContainer" style="width:128px;height:128px;margin:0 auto;"></div>
+                <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:4px;">สแกนด้วย iPad</div>
+              </div>
+              <div>
+                <div style="font-size:0.8rem;font-weight:800;color:#059669;">🔗 ลิงก์ถาวรเปิดได้ทุกที่ตลอด 24 ชม. (แม้ปิดเครื่อง Mac):</div>
+                <div class="lan-url-box">
+                  <span id="lanUrlText">https://potae13.github.io/krapaoflow/</span>
+                  <button type="button" class="quick-tag" id="btnCopyLanUrl" style="background:#334155;color:#FFF;border:none;">คัดลอกลิงก์</button>
+                </div>
+                <div style="font-size:0.76rem;color:var(--text-secondary);">
+                  • สถานะวง Wi-Fi ปัจจุบัน: <strong id="wifiSubnetText" style="color:#059669;">กำลังตรวจสอบรหัสวง Wi-Fi...</strong><br/>
+                  • รหัสห้องซิงค์: <strong id="roomCodeDisplayText">KP-8899</strong><br/>
+                  • ซิงค์ล่าสุดเมื่อ: <strong id="lastSyncedTimeText">เมื่อสักครู่</strong>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size:0.85rem;font-weight:800;margin-bottom:8px;">
+              🟢 อุปกรณ์ที่ตรวจพบในวง Wi-Fi เดียวกันตอนนี้:
+            </div>
+            <div id="connectedPeersList" style="margin-bottom:14px;"></div>
+
+            <button type="button" class="quick-amt-btn" id="btnResetAllToZero" style="width:100%;background:#FFF1F2;color:#E11D48;border-color:#FECDD3;">
+              🗑️ รีเซ็ตยอดและรายการทั้งหมดเป็น 0 (คงหมวดหมู่ที่ตั้งไว้)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =================================================================
+       MODAL 1: เพิ่ม / แก้ไข / ลบ ประเภทหมวดหมู่ (Category Editor Modal)
+       ================================================================= -->
+  <div class="modal-backdrop" id="categoryModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div style="font-weight:800;font-size:1rem;" id="categoryModalTitle">🏷️ เพิ่ม / แก้ไขประเภทหมวดหมู่</div>
+        <button type="button" id="btnCloseCategoryModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryEditorForm">
+          <input type="hidden" id="catEditIdInput" />
+
+          <div class="form-group">
+            <label class="form-label" for="catEditTypeSelect">ชนิดของหมวดหมู่</label>
+            <select id="catEditTypeSelect" class="select-filter" style="width:100%;margin-top:6px;">
+              <option value="expense">📉 หมวดหมู่รายจ่าย</option>
+              <option value="income">📈 หมวดหมู่รายรับ</option>
+            </select>
+          </div>
+
+          <div style="display:grid;grid-template-columns:110px 1fr;gap:12px;" class="form-group">
+            <div>
+              <label class="form-label" for="catEditIconInput">ไอคอน Emoji</label>
+              <input type="text" id="catEditIconInput" class="text-input" value="🍜" required style="text-align:center;font-size:1.4rem;margin-top:6px;" />
+            </div>
+            <div>
+              <label class="form-label" for="catEditNameInput">ชื่อประเภทหมวดหมู่</label>
+              <input type="text" id="catEditNameInput" class="text-input" placeholder="เช่น อาหาร, กาแฟ, สัตว์เลี้ยง..." required style="margin-top:6px;" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">เลือกไอคอนด่วน:</label>
+            <div class="quick-tags" id="emojiQuickPicker">
+              <button type="button" class="quick-tag" data-emoji="🍜">🍜</button>
+              <button type="button" class="quick-tag" data-emoji="☕">☕</button>
+              <button type="button" class="quick-tag" data-emoji="🚗">🚗</button>
+              <button type="button" class="quick-tag" data-emoji="🏠">🏠</button>
+              <button type="button" class="quick-tag" data-emoji="🛍️">🛍️</button>
+              <button type="button" class="quick-tag" data-emoji="💳">💳</button>
+              <button type="button" class="quick-tag" data-emoji="🎬">🎬</button>
+              <button type="button" class="quick-tag" data-emoji="🏥">🏥</button>
+              <button type="button" class="quick-tag" data-emoji="🐾">🐾</button>
+              <button type="button" class="quick-tag" data-emoji="💼">💼</button>
+              <button type="button" class="quick-tag" data-emoji="💻">💻</button>
+              <button type="button" class="quick-tag" data-emoji="📈">📈</button>
+              <button type="button" class="quick-tag" data-emoji="🎁">🎁</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="catEditColorInput">สีประจำหมวดหมู่</label>
+            <input type="color" id="catEditColorInput" value="#E11D48" style="width:100%;height:42px;border:1px solid var(--border-color);border-radius:10px;margin-top:6px;cursor:pointer;" />
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <button type="submit" class="btn-submit scheduled" style="margin-top:0;flex:1;">
+              💾 บันทึกหมวดหมู่
+            </button>
+            <button type="button" id="btnDeleteCategoryInModal" class="btn-submit expense" style="margin-top:0;flex:0;white-space:nowrap;display:none;">
+              🗑️ ลบหมวดหมู่นี้
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       MODAL 2: แก้ไขรายการรับ-จ่าย (Edit Transaction Modal)
+       ================================================================= -->
+  <div class="modal-backdrop" id="editTxModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div style="font-weight:800;font-size:1rem;">✏️ แก้ไขรายการรับ-จ่าย</div>
+        <button type="button" id="btnCloseEditTxModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="editTxForm">
+          <input type="hidden" id="editTxIdInput" />
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="form-group">
+            <div>
+              <label class="form-label" for="editTxTypeSelect">ประเภทรายการ</label>
+              <select id="editTxTypeSelect" class="select-filter" style="width:100%;margin-top:6px;">
+                <option value="expense">📉 รายจ่าย</option>
+                <option value="income">📈 รายรับ</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="editTxDateInput">วันที่</label>
+              <input type="date" id="editTxDateInput" class="text-input" required style="margin-top:6px;" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editTxAmountInput">จำนวนเงิน (บาท)</label>
+            <input type="number" id="editTxAmountInput" class="text-input" step="any" min="0.01" required style="margin-top:6px;font-size:1.3rem;font-weight:800;" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editTxCategorySelect">หมวดหมู่</label>
+            <select id="editTxCategorySelect" class="select-filter" style="width:100%;margin-top:6px;"></select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editTxTitleInput">ชื่อรายการ</label>
+            <input type="text" id="editTxTitleInput" class="text-input" required style="margin-top:6px;" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editTxNoteInput">หมายเหตุ</label>
+            <input type="text" id="editTxNoteInput" class="text-input" style="margin-top:6px;" />
+          </div>
+
+          <button type="submit" class="btn-submit scheduled">
+            💾 บันทึกการแก้ไข
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       MODAL 3: ดูรูปสลิปขนาดใหญ่ (Slip Image Viewer Modal)
+       ================================================================= -->
+  <div class="modal-backdrop" id="slipViewerModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:440px;">
+      <div class="modal-header">
+        <div style="font-weight:800;font-size:1rem;" id="slipViewerTitle">🧾 รูปสลิปที่แนบไว้</div>
+        <button type="button" id="btnCloseSlipViewer" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <img id="slipViewerFullImg" src="" alt="รูปสลิป" style="max-width:100%;max-height:65vh;border-radius:12px;border:1px solid var(--border-color);" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
