@@ -1415,12 +1415,59 @@ button:active,
 
 .toast-container {
   position: fixed;
-  bottom: 24px;
+  bottom: 84px;
   right: 24px;
   z-index: 300;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.bottom-app-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 6px 10px max(8px, env(safe-area-inset-bottom, 8px));
+  z-index: 200;
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.18);
+}
+
+.bottom-tab-item {
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.bottom-tab-item.active {
+  background: rgba(79, 70, 229, 0.28);
+  color: #FFFFFF;
+}
+
+.bottom-tab-item .bt-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.bottom-tab-item .bt-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .toast {

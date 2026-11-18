@@ -2,12 +2,11 @@
   "name": "KrapaoFlow — บันทึกรายรับ-รายจ่าย & วางแผนล่วงหน้า",
   "short_name": "KrapaoFlow",
   "description": "บันทึกรายรับ-รายจ่าย วางแผนรายจ่ายล่วงหน้า และซิงค์ข้อมูลอัตโนมัติผ่าน Wi-Fi เดียวกันสำหรับ iPad และ MacBook",
-  "start_url": "./",
+  "start_url": "./webapp.html",
   "scope": "./",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#0F172A",
   "theme_color": "#0F172A",
-  "orientation": "any",
   "icons": [
     {
       "src": "./icon.svg",

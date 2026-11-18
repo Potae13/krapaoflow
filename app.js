@@ -1875,14 +1875,17 @@
   }
 
   function initEvents() {
-    // iPadOS Home Screen Standalone Touch Bridge: ensures every single tap on a button fires reliably even if WebKit swallows synthetic click
+    // Synchronous iPadOS Touch Bridge: fires click synchronously inside touchend (trusted gesture) and suppresses delayed duplicate native click
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTarget = null;
-    let lastClickTime = 0;
+    let lastTouchTriggeredAt = 0;
 
-    document.addEventListener('click', () => {
-      lastClickTime = Date.now();
+    document.addEventListener('click', e => {
+      if (e.isTrusted && Date.now() - lastTouchTriggeredAt < 420) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
     }, true);
 
     document.addEventListener('touchstart', e => {
@@ -1901,13 +1904,9 @@
       const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
       const targetBtn = touchStartTarget;
       touchStartTarget = null;
-      if (dx < 14 && dy < 14) {
-        const endTime = Date.now();
-        setTimeout(() => {
-          if (lastClickTime < endTime) {
-            targetBtn.click();
-          }
-        }, 65);
+      if (dx < 16 && dy < 16) {
+        lastTouchTriggeredAt = Date.now();
+        targetBtn.click();
       }
     }, { passive: true });
 
@@ -2083,6 +2082,33 @@
       const cur = String(input.value || '');
       input.value = key === 'DEL' ? cur.slice(0, -1) : cur + key;
     });
+
+    const schNumpad = document.getElementById('schNumpad');
+    if (schNumpad) {
+      schNumpad.addEventListener('click', e => {
+        const btn = e.target.closest('[data-sch-numpad]');
+        if (!btn) return;
+        const key = btn.dataset.schNumpad;
+        const input = document.getElementById('schAmountInput');
+        const cur = String(input.value || '');
+        input.value = key === 'DEL' ? cur.slice(0, -1) : cur + key;
+      });
+    }
+
+    document.querySelectorAll('[data-sch-add-amt]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById('schAmountInput');
+        const curVal = parseFloat(String(input.value || '0').replace(/,/g, '')) || 0;
+        input.value = curVal + Number(btn.dataset.schAddAmt);
+      });
+    });
+
+    const btnClearSchAmt = document.getElementById('btnClearSchAmount');
+    if (btnClearSchAmt) {
+      btnClearSchAmt.addEventListener('click', () => {
+        document.getElementById('schAmountInput').value = '';
+      });
+    }
 
     document.getElementById('btnOpenAddCategoryModal').addEventListener('click', () => openCategoryModal(null));
 
@@ -2680,18 +2706,15 @@
     renderAll();
     initEvents();
 
+    // Unregister any stuck Service Workers & clear stale caches so iPad always runs the latest code
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js?v=8').then(reg => {
-        reg.update().catch(() => {});
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister().catch(() => {}));
       }).catch(() => {});
 
       if ('caches' in window) {
         caches.keys().then(keys => {
-          keys.forEach(k => {
-            if (k !== 'krapaoflow-v8-no-native-date') {
-              caches.delete(k).catch(() => {});
-            }
-          });
+          keys.forEach(k => caches.delete(k).catch(() => {}));
         }).catch(() => {});
       }
     }

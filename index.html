@@ -4,10 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
-  <link rel="manifest" href="./manifest.json?v=8" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icon.svg" />
-  <link rel="stylesheet" href="./styles.css?v=8" />
+  <link rel="stylesheet" href="./styles.css?v=9" />
 </head>
 <body>
   <!-- Top Header -->
@@ -18,7 +17,7 @@
         <div>
           <div class="brand-title">
             KrapaoFlow
-            <span class="brand-badge">v8 • รองรับ iPad แนวตั้ง 100%</span>
+            <span class="brand-badge">v9 • WebApp Edition</span>
           </div>
           <div style="font-size:0.75rem;color:#94A3B8;">
             ทำงานแยกอิสระเข้าจากที่ไหนก็ได้ (iPad / MacBook) • ซิงค์ข้อมูลล่าสุดอัตโนมัติเมื่อต่อ Wi-Fi เดียวกัน
@@ -592,13 +591,37 @@
           <div class="panel-body">
             <form id="scheduledOnlyForm" novalidate>
               <div class="form-group">
-                <label class="form-label" for="schTitleInput">ชื่อรายการที่ต้องจ่ายล่วงหน้า</label>
-                <input type="text" id="schTitleInput" class="text-input" placeholder="เช่น ค่าเช่าคอนโด, ค่าบัตรเครดิต, ผ่อน iPad..." required style="margin-top:6px;" />
+                <label class="form-label" for="schTitleInput">ชื่อรายการที่ต้องจ่ายล่วงหน้า <small style="font-weight:500;color:var(--text-muted);">(เว้นว่างได้)</small></label>
+                <input type="text" id="schTitleInput" class="text-input" placeholder="เช่น ค่าเช่าคอนโด, ค่าบัตรเครดิต, ผ่อน iPad..." style="margin-top:6px;" />
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="schAmountInput">จำนวนเงินที่ต้องเตรียม (บาท)</label>
-                <input type="text" inputmode="decimal" id="schAmountInput" class="text-input" placeholder="0" style="margin-top:6px;font-size:1.2rem;font-weight:800;" />
+                <div class="form-label-row">
+                  <label class="form-label" for="schAmountInput">จำนวนเงินที่ต้องเตรียม (บาท)</label>
+                  <span style="font-size:0.75rem;color:var(--text-secondary);">กดแป้นตัวเลขด้านล่างได้เลย</span>
+                </div>
+                <input type="text" inputmode="decimal" id="schAmountInput" class="text-input" placeholder="0" style="margin-top:6px;font-size:1.35rem;font-weight:800;" />
+                <div class="quick-amounts">
+                  <button type="button" class="quick-amt-btn" data-sch-add-amt="100">+100</button>
+                  <button type="button" class="quick-amt-btn" data-sch-add-amt="500">+500</button>
+                  <button type="button" class="quick-amt-btn" data-sch-add-amt="1000">+1,000</button>
+                  <button type="button" class="quick-amt-btn" data-sch-add-amt="5000">+5,000</button>
+                  <button type="button" class="quick-amt-btn" id="btnClearSchAmount" style="color:#E11D48;">ล้าง</button>
+                </div>
+                <div class="numpad-grid" id="schNumpad" style="display:grid;">
+                  <button type="button" class="numpad-btn" data-sch-numpad="7">7</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="8">8</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="9">9</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="DEL" style="color:#E11D48;">⌫</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="4">4</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="5">5</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="6">6</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="00">00</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="1">1</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="2">2</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="3">3</button>
+                  <button type="button" class="numpad-btn" data-sch-numpad="0">0</button>
+                </div>
               </div>
 
               <div class="form-group">
@@ -937,9 +960,33 @@
     </div>
   </div>
 
+  <!-- Fixed Bottom App Tab Bar for iPad Portrait & Mobile WebApp -->
+  <nav class="bottom-app-tabbar" id="bottomAppTabBar" aria-label="แถบเมนูด่วนด้านล่าง">
+    <button type="button" class="bottom-tab-item active" data-nav-view="record">
+      <span class="bt-icon">⚡</span>
+      <span class="bt-label">บันทึกด่วน</span>
+    </button>
+    <button type="button" class="bottom-tab-item" data-nav-view="upcoming">
+      <span class="bt-icon">⏰</span>
+      <span class="bt-label">รายการล่วงหน้า</span>
+    </button>
+    <button type="button" class="bottom-tab-item" data-nav-view="dashboard">
+      <span class="bt-icon">📊</span>
+      <span class="bt-label">แดชบอร์ด</span>
+    </button>
+    <button type="button" class="bottom-tab-item" data-nav-view="transactions">
+      <span class="bt-icon">📋</span>
+      <span class="bt-label">รายการรับ-จ่าย</span>
+    </button>
+    <button type="button" class="bottom-tab-item" data-nav-view="sync">
+      <span class="bt-icon">📡</span>
+      <span class="bt-label">ซิงค์ Wi-Fi</span>
+    </button>
+  </nav>
+
   <!-- Toast Notifications -->
   <div class="toast-container" id="toastContainer" style="pointer-events:none;"></div>
 
-  <script src="./app.js?v=8"></script>
+  <script src="./app.js?v=9"></script>
 </body>
 </html>
