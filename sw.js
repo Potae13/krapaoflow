@@ -1,5 +1,5 @@
-const CACHE_NAME = 'krapaoflow-v7-portrait-fix';
-const ASSETS = ['./', './index.html', './styles.css?v=7', './app.js?v=7', './manifest.json?v=7', './icon.svg'];
+const CACHE_NAME = 'krapaoflow-v8-no-native-date';
+const ASSETS = ['./', './index.html', './styles.css?v=8', './app.js?v=8', './manifest.json?v=8', './icon.svg'];
 
 self.addEventListener('install', event => {
   self.skipWaiting();

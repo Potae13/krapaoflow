@@ -156,7 +156,9 @@
     selectedCategory: 'exp_food',
     manageCategoriesMode: false,
     pendingSlipDataUrl: null,
-    showNumpad: deviceProfile.type === 'ipad',
+    showNumpad: true,
+    calendarModalContext: 'main',
+    calendarModalMonth: getTodayStr(0).slice(0, 7),
 
     syncHubUrl: getDefaultHubBaseUrl(),
     wifiConnected: false,
@@ -710,6 +712,10 @@
     if (dashMonthInput && dashMonthInput.value !== state.selectedMonth) {
       dashMonthInput.value = state.selectedMonth;
     }
+    const dashMonthLabel = document.getElementById('dashMonthLabel');
+    if (dashMonthLabel) dashMonthLabel.textContent = formatThaiMonth(state.selectedMonth);
+    const txMonthLabel = document.getElementById('txMonthLabel');
+    if (txMonthLabel) txMonthLabel.textContent = formatThaiMonth(state.selectedMonth);
   }
 
   // --- VIEW 1: QUICK RECORD + EDITABLE CATEGORIES ---
@@ -717,6 +723,12 @@
     document.getElementById('tabExpense').className = 'type-tab' + (state.entryMode === 'expense' ? ' active-expense' : '');
     document.getElementById('tabIncome').className = 'type-tab' + (state.entryMode === 'income' ? ' active-income' : '');
     document.getElementById('tabScheduled').className = 'type-tab' + (state.entryMode === 'scheduled' ? ' active-scheduled' : '');
+
+    const entryDateVal = document.getElementById('entryDateInput').value || state.selectedDate;
+    const entryDateDisplay = document.getElementById('entryDateDisplayText');
+    if (entryDateDisplay) {
+      entryDateDisplay.textContent = `📅 ${formatThaiDate(entryDateVal, true)}`;
+    }
 
     const dateLabel = document.getElementById('entryDateLabel');
     const btnNext7 = document.getElementById('btnEntryNext7Days');
@@ -910,6 +922,10 @@
     const targetDateInput = document.getElementById('targetCutoffDateInput');
     if (targetDateInput && targetDateInput.value !== targetDate) {
       targetDateInput.value = targetDate;
+    }
+    const targetCutoffDisplay = document.getElementById('targetCutoffDateDisplayText');
+    if (targetCutoffDisplay) {
+      targetCutoffDisplay.textContent = `${formatThaiDate(targetDate, true)} ▾`;
     }
 
     document.getElementById('btnModeNetShortfall').classList.toggle('active', targetMode === 'net_shortfall');
@@ -1377,6 +1393,10 @@
     if (schDueInput && !schDueInput.value) {
       schDueInput.value = getTodayStr(7);
     }
+    const schDueDisplay = document.getElementById('schDueDateDisplayText');
+    if (schDueDisplay && schDueInput) {
+      schDueDisplay.textContent = `📅 ${formatThaiDate(schDueInput.value, true)}`;
+    }
 
     const listEl = document.getElementById('scheduledExpensesList');
     const items = activeScheduledExpenses().sort((a, b) => {
@@ -1721,6 +1741,8 @@
         document.getElementById('editTxIdInput').value = tx.id;
         document.getElementById('editTxTypeSelect').value = tx.type;
         document.getElementById('editTxDateInput').value = tx.date;
+        const editDateBtn = document.getElementById('btnOpenEditTxCalendar');
+        if (editDateBtn) editDateBtn.textContent = '📅 ' + formatThaiDate(tx.date, true);
         document.getElementById('editTxAmountInput').value = tx.amount;
         document.getElementById('editTxTitleInput').value = tx.title;
         document.getElementById('editTxNoteInput').value = tx.note || '';
@@ -1764,6 +1786,92 @@
     renderDashboardAndCharts();
     renderTransactionsView();
     renderUpcomingView();
+  }
+
+  function getActiveDateForContext(ctx) {
+    if (ctx === 'entry') return document.getElementById('entryDateInput').value || state.selectedDate;
+    if (ctx === 'target') return (state.store.settings && state.store.settings.targetDate) || getTodayStr(15);
+    if (ctx === 'scheduled') return document.getElementById('schDueDateInput').value || getTodayStr(7);
+    if (ctx === 'editTx') return document.getElementById('editTxDateInput').value || state.selectedDate;
+    return state.selectedDate;
+  }
+
+  function openCustomCalendarModal(ctx) {
+    state.calendarModalContext = ctx || 'main';
+    const curDate = getActiveDateForContext(state.calendarModalContext);
+    state.calendarModalMonth = (curDate || getTodayStr(0)).slice(0, 7);
+    renderCustomCalendarModal();
+    document.getElementById('customCalendarModalBackdrop').classList.add('open');
+  }
+
+  function renderCustomCalendarModal() {
+    const ym = state.calendarModalMonth || getTodayStr(0).slice(0, 7);
+    const [year, month] = ym.split('-').map(Number);
+    const titleEl = document.getElementById('calModalMonthTitle');
+    if (titleEl) titleEl.textContent = formatThaiMonth(ym);
+
+    const grid = document.getElementById('calModalDaysGrid');
+    if (!grid) return;
+
+    const firstDay = new Date(year, month - 1, 1);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const startWeekday = firstDay.getDay();
+    const activeDate = getActiveDateForContext(state.calendarModalContext);
+    const todayStr = getTodayStr(0);
+
+    const weekdays = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+    let html = weekdays.map(w => `<div class="cal-weekday">${w}</div>`).join('');
+
+    for (let i = 0; i < startWeekday; i++) {
+      html += `<div class="cal-day-cell empty"></div>`;
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isSelected = dateStr === activeDate;
+      const isToday = dateStr === todayStr;
+      html += `
+        <div class="cal-day-cell ${isSelected ? 'selected' : ''}" data-custom-cal-date="${dateStr}" style="min-height:46px;align-items:center;justify-content:center;">
+          <div class="cal-day-num" style="font-size:0.95rem;">${d} ${isToday ? '📍' : ''}</div>
+        </div>
+      `;
+    }
+    grid.innerHTML = html;
+  }
+
+  function selectCustomCalendarDate(dateStr) {
+    if (!dateStr) return;
+    const ctx = state.calendarModalContext;
+    if (ctx === 'main') {
+      state.selectedDate = dateStr;
+      state.selectedMonth = dateStr.slice(0, 7);
+      document.getElementById('entryDateInput').value = dateStr;
+    } else if (ctx === 'entry') {
+      document.getElementById('entryDateInput').value = dateStr;
+      if (state.entryMode !== 'scheduled') {
+        state.selectedDate = dateStr;
+        state.selectedMonth = dateStr.slice(0, 7);
+      }
+    } else if (ctx === 'target') {
+      state.store.settings = { ...state.store.settings, targetDate: dateStr, updatedAt: Date.now() };
+      saveLocalStore();
+      syncWithWifiServer(false);
+    } else if (ctx === 'scheduled') {
+      document.getElementById('schDueDateInput').value = dateStr;
+    } else if (ctx === 'editTx') {
+      document.getElementById('editTxDateInput').value = dateStr;
+      const editDateBtn = document.getElementById('btnOpenEditTxCalendar');
+      if (editDateBtn) editDateBtn.textContent = '📅 ' + formatThaiDate(dateStr, true);
+    }
+    document.getElementById('customCalendarModalBackdrop').classList.remove('open');
+    renderAll();
+  }
+
+  function shiftSelectedMonth(deltaMonths) {
+    const [y, m] = (state.selectedMonth || getTodayStr(0).slice(0, 7)).split('-').map(Number);
+    const dt = new Date(y, m - 1 + deltaMonths, 1);
+    state.selectedMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+    renderAll();
   }
 
   function initEvents() {
@@ -1834,14 +1942,73 @@
 
     document.getElementById('btnTopSyncPill').addEventListener('click', () => switchView('sync'));
 
-    document.getElementById('mainDatePicker').addEventListener('change', e => {
-      if (e.target.value) {
-        state.selectedDate = e.target.value;
-        state.selectedMonth = e.target.value.slice(0, 7);
-        document.getElementById('entryDateInput').value = state.selectedDate;
-        renderAll();
-      }
+    // Pure HTML Custom Calendar Modal triggers (zero native UIKit date pickers)
+    const btnOpenMainCal = document.getElementById('btnOpenMainCalendar');
+    if (btnOpenMainCal) btnOpenMainCal.addEventListener('click', () => openCustomCalendarModal('main'));
+
+    const btnOpenEntryCal = document.getElementById('btnOpenEntryCalendar');
+    if (btnOpenEntryCal) btnOpenEntryCal.addEventListener('click', () => openCustomCalendarModal('entry'));
+
+    const btnOpenTargetCal = document.getElementById('btnOpenTargetCalendar');
+    if (btnOpenTargetCal) btnOpenTargetCal.addEventListener('click', () => openCustomCalendarModal('target'));
+
+    const btnOpenSchCal = document.getElementById('btnOpenSchCalendar');
+    if (btnOpenSchCal) btnOpenSchCal.addEventListener('click', () => openCustomCalendarModal('scheduled'));
+
+    const btnOpenEditTxCal = document.getElementById('btnOpenEditTxCalendar');
+    if (btnOpenEditTxCal) btnOpenEditTxCal.addEventListener('click', () => openCustomCalendarModal('editTx'));
+
+    const btnCloseCustomCal = document.getElementById('btnCloseCustomCalendar');
+    if (btnCloseCustomCal) {
+      btnCloseCustomCal.addEventListener('click', () => {
+        document.getElementById('customCalendarModalBackdrop').classList.remove('open');
+      });
+    }
+
+    const btnCalModalPrev = document.getElementById('btnCalModalPrevMonth');
+    if (btnCalModalPrev) {
+      btnCalModalPrev.addEventListener('click', () => {
+        const [y, m] = (state.calendarModalMonth || getTodayStr(0).slice(0, 7)).split('-').map(Number);
+        const dt = new Date(y, m - 2, 1);
+        state.calendarModalMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        renderCustomCalendarModal();
+      });
+    }
+
+    const btnCalModalNext = document.getElementById('btnCalModalNextMonth');
+    if (btnCalModalNext) {
+      btnCalModalNext.addEventListener('click', () => {
+        const [y, m] = (state.calendarModalMonth || getTodayStr(0).slice(0, 7)).split('-').map(Number);
+        const dt = new Date(y, m, 1);
+        state.calendarModalMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        renderCustomCalendarModal();
+      });
+    }
+
+    const calModalDaysGrid = document.getElementById('calModalDaysGrid');
+    if (calModalDaysGrid) {
+      calModalDaysGrid.addEventListener('click', e => {
+        const cell = e.target.closest('[data-custom-cal-date]');
+        if (cell) selectCustomCalendarDate(cell.dataset.customCalDate);
+      });
+    }
+
+    document.querySelectorAll('[data-cal-quick]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const offset = Number(btn.dataset.calQuick || 0);
+        selectCustomCalendarDate(getTodayStr(offset));
+      });
     });
+
+    const btnPrevMonthDash = document.getElementById('btnPrevMonthDash');
+    if (btnPrevMonthDash) btnPrevMonthDash.addEventListener('click', () => shiftSelectedMonth(-1));
+    const btnNextMonthDash = document.getElementById('btnNextMonthDash');
+    if (btnNextMonthDash) btnNextMonthDash.addEventListener('click', () => shiftSelectedMonth(1));
+
+    const btnPrevMonthTx = document.getElementById('btnPrevMonthTx');
+    if (btnPrevMonthTx) btnPrevMonthTx.addEventListener('click', () => { state.periodView = 'monthly'; shiftSelectedMonth(-1); });
+    const btnNextMonthTx = document.getElementById('btnNextMonthTx');
+    if (btnNextMonthTx) btnNextMonthTx.addEventListener('click', () => { state.periodView = 'monthly'; shiftSelectedMonth(1); });
 
     document.getElementById('btnGoToday').addEventListener('click', () => {
       const today = getTodayStr(0);
@@ -1883,16 +2050,19 @@
 
     document.getElementById('btnEntryTomorrow').addEventListener('click', () => {
       document.getElementById('entryDateInput').value = getTodayStr(1);
+      renderQuickRecordView();
     });
 
     document.getElementById('btnEntryNext7Days').addEventListener('click', () => {
       document.getElementById('entryDateInput').value = getTodayStr(7);
+      renderQuickRecordView();
     });
 
     document.querySelectorAll('[data-add-amt]').forEach(btn => {
       btn.addEventListener('click', () => {
         const input = document.getElementById('entryAmountInput');
-        input.value = Number(input.value || 0) + Number(btn.dataset.addAmt);
+        const curVal = parseFloat(String(input.value || '0').replace(/,/g, '')) || 0;
+        input.value = curVal + Number(btn.dataset.addAmt);
       });
     });
 
@@ -2054,7 +2224,8 @@
 
     document.getElementById('entryForm').addEventListener('submit', e => {
       e.preventDefault();
-      const amount = Number(document.getElementById('entryAmountInput').value);
+      const rawAmt = String(document.getElementById('entryAmountInput').value || '').replace(/,/g, '').trim();
+      const amount = parseFloat(rawAmt);
       const rawTitle = document.getElementById('entryTitleInput').value.trim();
       const note = document.getElementById('entryNoteInput').value.trim();
       const dateVal = document.getElementById('entryDateInput').value || getTodayStr(0);
@@ -2144,7 +2315,7 @@
       if (tx) {
         tx.type = document.getElementById('editTxTypeSelect').value;
         tx.date = document.getElementById('editTxDateInput').value;
-        tx.amount = Number(document.getElementById('editTxAmountInput').value);
+        tx.amount = parseFloat(String(document.getElementById('editTxAmountInput').value || '').replace(/,/g, '')) || 0;
         tx.category = document.getElementById('editTxCategorySelect').value;
         tx.title = document.getElementById('editTxTitleInput').value.trim();
         tx.note = document.getElementById('editTxNoteInput').value.trim();
@@ -2242,13 +2413,14 @@
     document.querySelectorAll('[data-sch-offset]').forEach(btn => {
       btn.addEventListener('click', () => {
         document.getElementById('schDueDateInput').value = getTodayStr(Number(btn.dataset.schOffset));
+        renderUpcomingView();
       });
     });
 
     document.getElementById('scheduledOnlyForm').addEventListener('submit', e => {
       e.preventDefault();
       const rawTitle = document.getElementById('schTitleInput').value.trim();
-      const amount = Number(document.getElementById('schAmountInput').value);
+      const amount = parseFloat(String(document.getElementById('schAmountInput').value || '').replace(/,/g, '')) || 0;
       const dueDate = document.getElementById('schDueDateInput').value || getTodayStr(7);
       const recurrence = document.getElementById('schRecurrenceSelect').value || 'none';
       const instCur = Number(document.getElementById('schInstCurInput').value || 1);
@@ -2509,14 +2681,14 @@
     initEvents();
 
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js?v=7').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=8').then(reg => {
         reg.update().catch(() => {});
       }).catch(() => {});
 
       if ('caches' in window) {
         caches.keys().then(keys => {
           keys.forEach(k => {
-            if (k !== 'krapaoflow-v7-portrait-fix') {
+            if (k !== 'krapaoflow-v8-no-native-date') {
               caches.delete(k).catch(() => {});
             }
           });

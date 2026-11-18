@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="KrapaoFlow" />
   <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
-  <link rel="manifest" href="./manifest.json?v=7" />
+  <link rel="manifest" href="./manifest.json?v=8" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icon.svg" />
   <style>
@@ -1506,7 +1503,7 @@ button:active,
         <div>
           <div class="brand-title">
             KrapaoFlow
-            <span class="brand-badge">พร้อมใช้งานจริง • Auto Wi-Fi Sync</span>
+            <span class="brand-badge">v8 • รองรับ iPad แนวตั้ง 100%</span>
           </div>
           <div style="font-size:0.75rem;color:#94A3B8;">
             ทำงานแยกอิสระเข้าจากที่ไหนก็ได้ (iPad / MacBook) • ซิงค์ข้อมูลล่าสุดอัตโนมัติเมื่อต่อ Wi-Fi เดียวกัน
@@ -1557,16 +1554,17 @@ button:active,
         </button>
       </div>
 
-      <!-- Global Date Picker & "📍 วันนี้" Button -->
+      <!-- Global Date Picker & "📍 วันนี้" Button (100% Pure HTML - No native UIKit DatePicker overlay bug) -->
       <div class="date-quick-bar">
-        <button class="btn-icon-nav" id="btnPrevDate" title="วันก่อนหน้า">◀</button>
-        <div class="date-display-box">
+        <button type="button" class="btn-icon-nav" id="btnPrevDate" title="วันก่อนหน้า">◀</button>
+        <input type="hidden" id="mainDatePicker" />
+        <button type="button" class="date-display-box" id="btnOpenMainCalendar" style="cursor:pointer;">
           <span>📅</span>
           <span class="date-label-thai" id="selectedDateThaiLabel">วันนี้</span>
-          <input type="date" id="mainDatePicker" class="date-input-native" aria-label="เลือกวันที่" />
-        </div>
-        <button class="btn-icon-nav" id="btnNextDate" title="วันถัดไป">▶</button>
-        <button class="btn-today is-today" id="btnGoToday">
+          <span style="font-size:0.75rem;color:#4F46E5;font-weight:700;margin-left:4px;">(เปลี่ยนวัน)</span>
+        </button>
+        <button type="button" class="btn-icon-nav" id="btnNextDate" title="วันถัดไป">▶</button>
+        <button type="button" class="btn-today is-today" id="btnGoToday">
           <span>📍</span>
           <span id="btnTodayLabel">วันนี้</span>
         </button>
@@ -1589,7 +1587,7 @@ button:active,
               <span>บันทึกรายการรับ-จ่ายด่วน</span>
             </div>
             <button type="button" class="quick-amt-btn" id="btnToggleNumpad" style="flex:0;white-space:nowrap;">
-              🔢 แป้นตัวเลขสัมผัส (iPad)
+              🔢 ซ่อน/แสดงแป้นตัวเลข
             </button>
           </div>
 
@@ -1608,17 +1606,21 @@ button:active,
             </div>
 
             <form id="entryForm" novalidate>
-              <!-- Date Selection -->
+              <!-- Date Selection (Pure HTML Calendar Trigger - Zero iPadOS UIKit Overlay Bug) -->
               <div class="form-group">
                 <div class="form-label-row">
-                  <label class="form-label" id="entryDateLabel" for="entryDateInput">วันที่ของรายการ</label>
+                  <label class="form-label" id="entryDateLabel">วันที่ของรายการ</label>
                   <div style="display:flex;gap:6px;">
                     <button type="button" class="quick-tag" id="btnEntryToday">📍 วันนี้</button>
                     <button type="button" class="quick-tag" id="btnEntryTomorrow">+1 พรุ่งนี้</button>
                     <button type="button" class="quick-tag" id="btnEntryNext7Days" style="display:none;">+7 วัน</button>
                   </div>
                 </div>
-                <input type="date" id="entryDateInput" class="text-input" required />
+                <input type="hidden" id="entryDateInput" />
+                <button type="button" class="text-input" id="btnOpenEntryCalendar" style="text-align:left;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+                  <span id="entryDateDisplayText">📅 วันนี้</span>
+                  <span style="font-size:0.78rem;color:#4F46E5;">แตะเพื่อเลือกวันที่ ▾</span>
+                </button>
               </div>
 
               <!-- Recurrence Option (Visible when Scheduled mode is chosen) -->
@@ -1632,9 +1634,9 @@ button:active,
                     <option value="installment">💳 ผ่อนชำระ (ระบุงวด เช่น 1/10)</option>
                   </select>
                   <div id="entryInstallmentWrap" style="display:none;gap:6px;align-items:center;">
-                    <input type="number" id="entryInstCurrent" class="text-input" placeholder="งวดที่" min="1" value="1" style="padding:8px;" />
+                    <input type="text" inputmode="numeric" id="entryInstCurrent" class="text-input" placeholder="งวดที่" value="1" style="padding:8px;" />
                     <span>/</span>
-                    <input type="number" id="entryInstTotal" class="text-input" placeholder="ทั้งหมด" min="2" value="10" style="padding:8px;" />
+                    <input type="text" inputmode="numeric" id="entryInstTotal" class="text-input" placeholder="ทั้งหมด" value="10" style="padding:8px;" />
                   </div>
                 </div>
               </div>
@@ -1643,19 +1645,17 @@ button:active,
               <div class="form-group">
                 <div class="form-label-row">
                   <label class="form-label" for="entryAmountInput">จำนวนเงิน (บาท)</label>
-                  <span style="font-size:0.75rem;color:var(--text-secondary);">กดปุ่มลัดเพื่อบวกเพิ่มได้</span>
+                  <span style="font-size:0.75rem;color:var(--text-secondary);">กดแป้นตัวเลขด้านล่างหรือปุ่มลัดได้เลย</span>
                 </div>
                 <div class="amount-input-wrap">
-                  <span class="currency-prefix">฿</span>
+                  <span class="currency-prefix" style="pointer-events:none;">฿</span>
                   <input
-                    type="number"
+                    type="text"
                     id="entryAmountInput"
                     class="amount-input"
-                    placeholder="0.00"
-                    step="any"
-                    min="0.01"
+                    placeholder="0"
                     inputmode="decimal"
-                    required
+                    autocomplete="off"
                   />
                 </div>
                 <div class="quick-amounts">
@@ -1666,8 +1666,8 @@ button:active,
                   <button type="button" class="quick-amt-btn" id="btnClearAmount" style="color:#E11D48;">ล้าง</button>
                 </div>
 
-                <!-- Touch Numpad -->
-                <div class="numpad-grid" id="ipadNumpad" style="display:none;">
+                <!-- Touch Numpad (Visible by default for instant tapping on iPad Portrait & Landscape) -->
+                <div class="numpad-grid" id="ipadNumpad" style="display:grid;">
                   <button type="button" class="numpad-btn" data-numpad="7">7</button>
                   <button type="button" class="numpad-btn" data-numpad="8">8</button>
                   <button type="button" class="numpad-btn" data-numpad="9">9</button>
@@ -1910,7 +1910,12 @@ button:active,
               <div class="chart-title">🗓️ ปฏิทินรายเดือน (Calendar Heatmap)</div>
               <div class="chart-subtitle" id="calendarHeatmapSubtitle">แสดงยอด +รับ / -จ่าย ในแต่ละวันของเดือน คลิกที่ช่องวันเพื่อเลือกดูได้ทันที</div>
             </div>
-            <input type="month" id="dashMonthPicker" class="date-input-native" />
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-icon-nav" id="btnPrevMonthDash" style="width:32px;height:32px;">◀</button>
+              <span id="dashMonthLabel" style="font-size:0.84rem;font-weight:800;min-width:110px;text-align:center;">เดือนนี้</span>
+              <button type="button" class="btn-icon-nav" id="btnNextMonthDash" style="width:32px;height:32px;">▶</button>
+              <input type="hidden" id="dashMonthPicker" />
+            </div>
           </div>
           <div class="calendar-heatmap-grid" id="calendarHeatmapContainer"></div>
         </div>
@@ -1934,10 +1939,11 @@ button:active,
             <div class="chart-subtitle">เปรียบเทียบเงินคงเหลือปัจจุบัน กับยอดรวมรายจ่ายล่วงหน้าที่ต้องชำระก่อนวันที่กำหนด</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <label style="font-size:0.82rem;font-weight:700;">
-              ก่อนวันที่:
-              <input type="date" id="targetCutoffDateInput" class="date-input-native" style="margin-left:4px;" />
-            </label>
+            <input type="hidden" id="targetCutoffDateInput" />
+            <button type="button" class="date-display-box" id="btnOpenTargetCalendar" style="cursor:pointer;">
+              <span>🎯 ก่อนวันที่:</span>
+              <strong id="targetCutoffDateDisplayText" style="color:#4F46E5;">เลือกวันเป้าหมาย</strong>
+            </button>
             <div class="segmented-control">
               <button type="button" class="filter-pill active" id="btnModeNetShortfall">หักเงินคงเหลือที่มี</button>
               <button type="button" class="filter-pill" id="btnModeGrossUpcoming">ยอดจ่ายล่วงหน้าเต็ม</button>
@@ -1998,7 +2004,12 @@ button:active,
                   🗓️ แสดงรายเดือน
                 </button>
               </div>
-              <input type="month" id="monthPickerInput" class="date-input-native" aria-label="เลือกเดือน" />
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-icon-nav" id="btnPrevMonthTx" style="width:32px;height:32px;">◀</button>
+                <span id="txMonthLabel" style="font-size:0.84rem;font-weight:800;min-width:110px;text-align:center;">เดือนนี้</span>
+                <button type="button" class="btn-icon-nav" id="btnNextMonthTx" style="width:32px;height:32px;">▶</button>
+                <input type="hidden" id="monthPickerInput" />
+              </div>
             </div>
 
             <div class="segmented-control" role="group" aria-label="กรองประเภทรายรับรายจ่าย">
@@ -2072,12 +2083,12 @@ button:active,
 
               <div class="form-group">
                 <label class="form-label" for="schAmountInput">จำนวนเงินที่ต้องเตรียม (บาท)</label>
-                <input type="number" id="schAmountInput" class="text-input" placeholder="0.00" step="any" min="0.01" required style="margin-top:6px;font-size:1.2rem;font-weight:800;" />
+                <input type="text" inputmode="decimal" id="schAmountInput" class="text-input" placeholder="0" style="margin-top:6px;font-size:1.2rem;font-weight:800;" />
               </div>
 
               <div class="form-group">
                 <div class="form-label-row">
-                  <label class="form-label" for="schDueDateInput">กำหนดชำระก่อนวันที่ (Due Date)</label>
+                  <label class="form-label">กำหนดชำระก่อนวันที่ (Due Date)</label>
                   <div style="display:flex;gap:6px;">
                     <button type="button" class="quick-tag" data-sch-offset="3">อีก 3 วัน</button>
                     <button type="button" class="quick-tag" data-sch-offset="7">อีก 7 วัน</button>
@@ -2085,7 +2096,11 @@ button:active,
                     <button type="button" class="quick-tag" data-sch-offset="30">อีก 1 เดือน</button>
                   </div>
                 </div>
-                <input type="date" id="schDueDateInput" class="text-input" required />
+                <input type="hidden" id="schDueDateInput" />
+                <button type="button" class="text-input" id="btnOpenSchCalendar" style="text-align:left;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+                  <span id="schDueDateDisplayText">📅 เลือกวันครบกำหนด</span>
+                  <span style="font-size:0.78rem;color:#4F46E5;">แตะเพื่อเลือกวันที่ ▾</span>
+                </button>
               </div>
 
               <!-- Recurrence & Installment Tracker -->
@@ -2100,11 +2115,11 @@ button:active,
                 <div id="schInstallmentFields" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
                   <div>
                     <label class="form-label">งวดปัจจุบันที่กำลังจะจ่าย</label>
-                    <input type="number" id="schInstCurInput" class="text-input" min="1" value="1" />
+                    <input type="text" inputmode="numeric" id="schInstCurInput" class="text-input" value="1" />
                   </div>
                   <div>
                     <label class="form-label">จำนวนงวดทั้งหมด</label>
-                    <input type="number" id="schInstTotalInput" class="text-input" min="2" value="10" />
+                    <input type="text" inputmode="numeric" id="schInstTotalInput" class="text-input" value="10" />
                   </div>
                 </div>
               </div>
@@ -2328,14 +2343,17 @@ button:active,
               </select>
             </div>
             <div>
-              <label class="form-label" for="editTxDateInput">วันที่</label>
-              <input type="date" id="editTxDateInput" class="text-input" required style="margin-top:6px;" />
+              <label class="form-label">วันที่</label>
+              <input type="hidden" id="editTxDateInput" />
+              <button type="button" class="text-input" id="btnOpenEditTxCalendar" style="margin-top:6px;text-align:left;font-weight:700;cursor:pointer;">
+                📅 เลือกวันที่
+              </button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="editTxAmountInput">จำนวนเงิน (บาท)</label>
-            <input type="number" id="editTxAmountInput" class="text-input" step="any" min="0.01" required style="margin-top:6px;font-size:1.3rem;font-weight:800;" />
+            <input type="text" inputmode="decimal" id="editTxAmountInput" class="text-input" style="margin-top:6px;font-size:1.3rem;font-weight:800;" />
           </div>
 
           <div class="form-group">
@@ -2345,7 +2363,7 @@ button:active,
 
           <div class="form-group">
             <label class="form-label" for="editTxTitleInput">ชื่อรายการ</label>
-            <input type="text" id="editTxTitleInput" class="text-input" required style="margin-top:6px;" />
+            <input type="text" id="editTxTitleInput" class="text-input" style="margin-top:6px;" />
           </div>
 
           <div class="form-group">
@@ -2376,8 +2394,36 @@ button:active,
     </div>
   </div>
 
+  <!-- =================================================================
+       MODAL 4: ปฏิทินเลือกวันที่แบบ Pure HTML (100% รองรับ iPad แนวตั้ง ไม่ใช้ UIKit DatePicker)
+       ================================================================= -->
+  <div class="modal-backdrop" id="customCalendarModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="modal-header">
+        <div style="font-weight:800;font-size:1rem;">📅 เลือกวันที่</div>
+        <button type="button" id="btnCloseCustomCalendar" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+          <button type="button" class="quick-amt-btn" data-cal-quick="0" style="background:#DBEAFE;color:#1D4ED8;border-color:#93C5FD;">📍 วันนี้</button>
+          <button type="button" class="quick-amt-btn" data-cal-quick="-1">เมื่อวาน</button>
+          <button type="button" class="quick-amt-btn" data-cal-quick="1">+1 พรุ่งนี้</button>
+          <button type="button" class="quick-amt-btn" data-cal-quick="7">+7 วัน</button>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <button type="button" class="btn-icon-nav" id="btnCalModalPrevMonth">◀</button>
+          <strong id="calModalMonthTitle" style="font-size:1rem;">เดือนนี้</strong>
+          <button type="button" class="btn-icon-nav" id="btnCalModalNextMonth">▶</button>
+        </div>
+
+        <div class="calendar-heatmap-grid" id="calModalDaysGrid"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notifications -->
-  <div class="toast-container" id="toastContainer"></div>
+  <div class="toast-container" id="toastContainer" style="pointer-events:none;"></div>
 
   <script>
 (() => {
@@ -2538,7 +2584,9 @@ button:active,
     selectedCategory: 'exp_food',
     manageCategoriesMode: false,
     pendingSlipDataUrl: null,
-    showNumpad: deviceProfile.type === 'ipad',
+    showNumpad: true,
+    calendarModalContext: 'main',
+    calendarModalMonth: getTodayStr(0).slice(0, 7),
 
     syncHubUrl: getDefaultHubBaseUrl(),
     wifiConnected: false,
@@ -3092,6 +3140,10 @@ button:active,
     if (dashMonthInput && dashMonthInput.value !== state.selectedMonth) {
       dashMonthInput.value = state.selectedMonth;
     }
+    const dashMonthLabel = document.getElementById('dashMonthLabel');
+    if (dashMonthLabel) dashMonthLabel.textContent = formatThaiMonth(state.selectedMonth);
+    const txMonthLabel = document.getElementById('txMonthLabel');
+    if (txMonthLabel) txMonthLabel.textContent = formatThaiMonth(state.selectedMonth);
   }
 
   // --- VIEW 1: QUICK RECORD + EDITABLE CATEGORIES ---
@@ -3099,6 +3151,12 @@ button:active,
     document.getElementById('tabExpense').className = 'type-tab' + (state.entryMode === 'expense' ? ' active-expense' : '');
     document.getElementById('tabIncome').className = 'type-tab' + (state.entryMode === 'income' ? ' active-income' : '');
     document.getElementById('tabScheduled').className = 'type-tab' + (state.entryMode === 'scheduled' ? ' active-scheduled' : '');
+
+    const entryDateVal = document.getElementById('entryDateInput').value || state.selectedDate;
+    const entryDateDisplay = document.getElementById('entryDateDisplayText');
+    if (entryDateDisplay) {
+      entryDateDisplay.textContent = `📅 ${formatThaiDate(entryDateVal, true)}`;
+    }
 
     const dateLabel = document.getElementById('entryDateLabel');
     const btnNext7 = document.getElementById('btnEntryNext7Days');
@@ -3292,6 +3350,10 @@ button:active,
     const targetDateInput = document.getElementById('targetCutoffDateInput');
     if (targetDateInput && targetDateInput.value !== targetDate) {
       targetDateInput.value = targetDate;
+    }
+    const targetCutoffDisplay = document.getElementById('targetCutoffDateDisplayText');
+    if (targetCutoffDisplay) {
+      targetCutoffDisplay.textContent = `${formatThaiDate(targetDate, true)} ▾`;
     }
 
     document.getElementById('btnModeNetShortfall').classList.toggle('active', targetMode === 'net_shortfall');
@@ -3759,6 +3821,10 @@ button:active,
     if (schDueInput && !schDueInput.value) {
       schDueInput.value = getTodayStr(7);
     }
+    const schDueDisplay = document.getElementById('schDueDateDisplayText');
+    if (schDueDisplay && schDueInput) {
+      schDueDisplay.textContent = `📅 ${formatThaiDate(schDueInput.value, true)}`;
+    }
 
     const listEl = document.getElementById('scheduledExpensesList');
     const items = activeScheduledExpenses().sort((a, b) => {
@@ -4103,6 +4169,8 @@ button:active,
         document.getElementById('editTxIdInput').value = tx.id;
         document.getElementById('editTxTypeSelect').value = tx.type;
         document.getElementById('editTxDateInput').value = tx.date;
+        const editDateBtn = document.getElementById('btnOpenEditTxCalendar');
+        if (editDateBtn) editDateBtn.textContent = '📅 ' + formatThaiDate(tx.date, true);
         document.getElementById('editTxAmountInput').value = tx.amount;
         document.getElementById('editTxTitleInput').value = tx.title;
         document.getElementById('editTxNoteInput').value = tx.note || '';
@@ -4146,6 +4214,92 @@ button:active,
     renderDashboardAndCharts();
     renderTransactionsView();
     renderUpcomingView();
+  }
+
+  function getActiveDateForContext(ctx) {
+    if (ctx === 'entry') return document.getElementById('entryDateInput').value || state.selectedDate;
+    if (ctx === 'target') return (state.store.settings && state.store.settings.targetDate) || getTodayStr(15);
+    if (ctx === 'scheduled') return document.getElementById('schDueDateInput').value || getTodayStr(7);
+    if (ctx === 'editTx') return document.getElementById('editTxDateInput').value || state.selectedDate;
+    return state.selectedDate;
+  }
+
+  function openCustomCalendarModal(ctx) {
+    state.calendarModalContext = ctx || 'main';
+    const curDate = getActiveDateForContext(state.calendarModalContext);
+    state.calendarModalMonth = (curDate || getTodayStr(0)).slice(0, 7);
+    renderCustomCalendarModal();
+    document.getElementById('customCalendarModalBackdrop').classList.add('open');
+  }
+
+  function renderCustomCalendarModal() {
+    const ym = state.calendarModalMonth || getTodayStr(0).slice(0, 7);
+    const [year, month] = ym.split('-').map(Number);
+    const titleEl = document.getElementById('calModalMonthTitle');
+    if (titleEl) titleEl.textContent = formatThaiMonth(ym);
+
+    const grid = document.getElementById('calModalDaysGrid');
+    if (!grid) return;
+
+    const firstDay = new Date(year, month - 1, 1);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const startWeekday = firstDay.getDay();
+    const activeDate = getActiveDateForContext(state.calendarModalContext);
+    const todayStr = getTodayStr(0);
+
+    const weekdays = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+    let html = weekdays.map(w => `<div class="cal-weekday">${w}</div>`).join('');
+
+    for (let i = 0; i < startWeekday; i++) {
+      html += `<div class="cal-day-cell empty"></div>`;
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isSelected = dateStr === activeDate;
+      const isToday = dateStr === todayStr;
+      html += `
+        <div class="cal-day-cell ${isSelected ? 'selected' : ''}" data-custom-cal-date="${dateStr}" style="min-height:46px;align-items:center;justify-content:center;">
+          <div class="cal-day-num" style="font-size:0.95rem;">${d} ${isToday ? '📍' : ''}</div>
+        </div>
+      `;
+    }
+    grid.innerHTML = html;
+  }
+
+  function selectCustomCalendarDate(dateStr) {
+    if (!dateStr) return;
+    const ctx = state.calendarModalContext;
+    if (ctx === 'main') {
+      state.selectedDate = dateStr;
+      state.selectedMonth = dateStr.slice(0, 7);
+      document.getElementById('entryDateInput').value = dateStr;
+    } else if (ctx === 'entry') {
+      document.getElementById('entryDateInput').value = dateStr;
+      if (state.entryMode !== 'scheduled') {
+        state.selectedDate = dateStr;
+        state.selectedMonth = dateStr.slice(0, 7);
+      }
+    } else if (ctx === 'target') {
+      state.store.settings = { ...state.store.settings, targetDate: dateStr, updatedAt: Date.now() };
+      saveLocalStore();
+      syncWithWifiServer(false);
+    } else if (ctx === 'scheduled') {
+      document.getElementById('schDueDateInput').value = dateStr;
+    } else if (ctx === 'editTx') {
+      document.getElementById('editTxDateInput').value = dateStr;
+      const editDateBtn = document.getElementById('btnOpenEditTxCalendar');
+      if (editDateBtn) editDateBtn.textContent = '📅 ' + formatThaiDate(dateStr, true);
+    }
+    document.getElementById('customCalendarModalBackdrop').classList.remove('open');
+    renderAll();
+  }
+
+  function shiftSelectedMonth(deltaMonths) {
+    const [y, m] = (state.selectedMonth || getTodayStr(0).slice(0, 7)).split('-').map(Number);
+    const dt = new Date(y, m - 1 + deltaMonths, 1);
+    state.selectedMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+    renderAll();
   }
 
   function initEvents() {
@@ -4216,14 +4370,73 @@ button:active,
 
     document.getElementById('btnTopSyncPill').addEventListener('click', () => switchView('sync'));
 
-    document.getElementById('mainDatePicker').addEventListener('change', e => {
-      if (e.target.value) {
-        state.selectedDate = e.target.value;
-        state.selectedMonth = e.target.value.slice(0, 7);
-        document.getElementById('entryDateInput').value = state.selectedDate;
-        renderAll();
-      }
+    // Pure HTML Custom Calendar Modal triggers (zero native UIKit date pickers)
+    const btnOpenMainCal = document.getElementById('btnOpenMainCalendar');
+    if (btnOpenMainCal) btnOpenMainCal.addEventListener('click', () => openCustomCalendarModal('main'));
+
+    const btnOpenEntryCal = document.getElementById('btnOpenEntryCalendar');
+    if (btnOpenEntryCal) btnOpenEntryCal.addEventListener('click', () => openCustomCalendarModal('entry'));
+
+    const btnOpenTargetCal = document.getElementById('btnOpenTargetCalendar');
+    if (btnOpenTargetCal) btnOpenTargetCal.addEventListener('click', () => openCustomCalendarModal('target'));
+
+    const btnOpenSchCal = document.getElementById('btnOpenSchCalendar');
+    if (btnOpenSchCal) btnOpenSchCal.addEventListener('click', () => openCustomCalendarModal('scheduled'));
+
+    const btnOpenEditTxCal = document.getElementById('btnOpenEditTxCalendar');
+    if (btnOpenEditTxCal) btnOpenEditTxCal.addEventListener('click', () => openCustomCalendarModal('editTx'));
+
+    const btnCloseCustomCal = document.getElementById('btnCloseCustomCalendar');
+    if (btnCloseCustomCal) {
+      btnCloseCustomCal.addEventListener('click', () => {
+        document.getElementById('customCalendarModalBackdrop').classList.remove('open');
+      });
+    }
+
+    const btnCalModalPrev = document.getElementById('btnCalModalPrevMonth');
+    if (btnCalModalPrev) {
+      btnCalModalPrev.addEventListener('click', () => {
+        const [y, m] = (state.calendarModalMonth || getTodayStr(0).slice(0, 7)).split('-').map(Number);
+        const dt = new Date(y, m - 2, 1);
+        state.calendarModalMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        renderCustomCalendarModal();
+      });
+    }
+
+    const btnCalModalNext = document.getElementById('btnCalModalNextMonth');
+    if (btnCalModalNext) {
+      btnCalModalNext.addEventListener('click', () => {
+        const [y, m] = (state.calendarModalMonth || getTodayStr(0).slice(0, 7)).split('-').map(Number);
+        const dt = new Date(y, m, 1);
+        state.calendarModalMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        renderCustomCalendarModal();
+      });
+    }
+
+    const calModalDaysGrid = document.getElementById('calModalDaysGrid');
+    if (calModalDaysGrid) {
+      calModalDaysGrid.addEventListener('click', e => {
+        const cell = e.target.closest('[data-custom-cal-date]');
+        if (cell) selectCustomCalendarDate(cell.dataset.customCalDate);
+      });
+    }
+
+    document.querySelectorAll('[data-cal-quick]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const offset = Number(btn.dataset.calQuick || 0);
+        selectCustomCalendarDate(getTodayStr(offset));
+      });
     });
+
+    const btnPrevMonthDash = document.getElementById('btnPrevMonthDash');
+    if (btnPrevMonthDash) btnPrevMonthDash.addEventListener('click', () => shiftSelectedMonth(-1));
+    const btnNextMonthDash = document.getElementById('btnNextMonthDash');
+    if (btnNextMonthDash) btnNextMonthDash.addEventListener('click', () => shiftSelectedMonth(1));
+
+    const btnPrevMonthTx = document.getElementById('btnPrevMonthTx');
+    if (btnPrevMonthTx) btnPrevMonthTx.addEventListener('click', () => { state.periodView = 'monthly'; shiftSelectedMonth(-1); });
+    const btnNextMonthTx = document.getElementById('btnNextMonthTx');
+    if (btnNextMonthTx) btnNextMonthTx.addEventListener('click', () => { state.periodView = 'monthly'; shiftSelectedMonth(1); });
 
     document.getElementById('btnGoToday').addEventListener('click', () => {
       const today = getTodayStr(0);
@@ -4265,16 +4478,19 @@ button:active,
 
     document.getElementById('btnEntryTomorrow').addEventListener('click', () => {
       document.getElementById('entryDateInput').value = getTodayStr(1);
+      renderQuickRecordView();
     });
 
     document.getElementById('btnEntryNext7Days').addEventListener('click', () => {
       document.getElementById('entryDateInput').value = getTodayStr(7);
+      renderQuickRecordView();
     });
 
     document.querySelectorAll('[data-add-amt]').forEach(btn => {
       btn.addEventListener('click', () => {
         const input = document.getElementById('entryAmountInput');
-        input.value = Number(input.value || 0) + Number(btn.dataset.addAmt);
+        const curVal = parseFloat(String(input.value || '0').replace(/,/g, '')) || 0;
+        input.value = curVal + Number(btn.dataset.addAmt);
       });
     });
 
@@ -4436,7 +4652,8 @@ button:active,
 
     document.getElementById('entryForm').addEventListener('submit', e => {
       e.preventDefault();
-      const amount = Number(document.getElementById('entryAmountInput').value);
+      const rawAmt = String(document.getElementById('entryAmountInput').value || '').replace(/,/g, '').trim();
+      const amount = parseFloat(rawAmt);
       const rawTitle = document.getElementById('entryTitleInput').value.trim();
       const note = document.getElementById('entryNoteInput').value.trim();
       const dateVal = document.getElementById('entryDateInput').value || getTodayStr(0);
@@ -4526,7 +4743,7 @@ button:active,
       if (tx) {
         tx.type = document.getElementById('editTxTypeSelect').value;
         tx.date = document.getElementById('editTxDateInput').value;
-        tx.amount = Number(document.getElementById('editTxAmountInput').value);
+        tx.amount = parseFloat(String(document.getElementById('editTxAmountInput').value || '').replace(/,/g, '')) || 0;
         tx.category = document.getElementById('editTxCategorySelect').value;
         tx.title = document.getElementById('editTxTitleInput').value.trim();
         tx.note = document.getElementById('editTxNoteInput').value.trim();
@@ -4624,13 +4841,14 @@ button:active,
     document.querySelectorAll('[data-sch-offset]').forEach(btn => {
       btn.addEventListener('click', () => {
         document.getElementById('schDueDateInput').value = getTodayStr(Number(btn.dataset.schOffset));
+        renderUpcomingView();
       });
     });
 
     document.getElementById('scheduledOnlyForm').addEventListener('submit', e => {
       e.preventDefault();
       const rawTitle = document.getElementById('schTitleInput').value.trim();
-      const amount = Number(document.getElementById('schAmountInput').value);
+      const amount = parseFloat(String(document.getElementById('schAmountInput').value || '').replace(/,/g, '')) || 0;
       const dueDate = document.getElementById('schDueDateInput').value || getTodayStr(7);
       const recurrence = document.getElementById('schRecurrenceSelect').value || 'none';
       const instCur = Number(document.getElementById('schInstCurInput').value || 1);
@@ -4891,14 +5109,14 @@ button:active,
     initEvents();
 
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js?v=7').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=8').then(reg => {
         reg.update().catch(() => {});
       }).catch(() => {});
 
       if ('caches' in window) {
         caches.keys().then(keys => {
           keys.forEach(k => {
-            if (k !== 'krapaoflow-v7-portrait-fix') {
+            if (k !== 'krapaoflow-v8-no-native-date') {
               caches.delete(k).catch(() => {});
             }
           });

@@ -3,14 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="KrapaoFlow" />
   <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
-  <link rel="manifest" href="./manifest.json?v=7" />
+  <link rel="manifest" href="./manifest.json?v=8" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icon.svg" />
-  <link rel="stylesheet" href="./styles.css?v=7" />
+  <link rel="stylesheet" href="./styles.css?v=8" />
 </head>
 <body>
   <!-- Top Header -->
@@ -21,7 +18,7 @@
         <div>
           <div class="brand-title">
             KrapaoFlow
-            <span class="brand-badge">พร้อมใช้งานจริง • Auto Wi-Fi Sync</span>
+            <span class="brand-badge">v8 • รองรับ iPad แนวตั้ง 100%</span>
           </div>
           <div style="font-size:0.75rem;color:#94A3B8;">
             ทำงานแยกอิสระเข้าจากที่ไหนก็ได้ (iPad / MacBook) • ซิงค์ข้อมูลล่าสุดอัตโนมัติเมื่อต่อ Wi-Fi เดียวกัน
@@ -72,16 +69,17 @@
         </button>
       </div>
 
-      <!-- Global Date Picker & "📍 วันนี้" Button -->
+      <!-- Global Date Picker & "📍 วันนี้" Button (100% Pure HTML - No native UIKit DatePicker overlay bug) -->
       <div class="date-quick-bar">
-        <button class="btn-icon-nav" id="btnPrevDate" title="วันก่อนหน้า">◀</button>
-        <div class="date-display-box">
+        <button type="button" class="btn-icon-nav" id="btnPrevDate" title="วันก่อนหน้า">◀</button>
+        <input type="hidden" id="mainDatePicker" />
+        <button type="button" class="date-display-box" id="btnOpenMainCalendar" style="cursor:pointer;">
           <span>📅</span>
           <span class="date-label-thai" id="selectedDateThaiLabel">วันนี้</span>
-          <input type="date" id="mainDatePicker" class="date-input-native" aria-label="เลือกวันที่" />
-        </div>
-        <button class="btn-icon-nav" id="btnNextDate" title="วันถัดไป">▶</button>
-        <button class="btn-today is-today" id="btnGoToday">
+          <span style="font-size:0.75rem;color:#4F46E5;font-weight:700;margin-left:4px;">(เปลี่ยนวัน)</span>
+        </button>
+        <button type="button" class="btn-icon-nav" id="btnNextDate" title="วันถัดไป">▶</button>
+        <button type="button" class="btn-today is-today" id="btnGoToday">
           <span>📍</span>
           <span id="btnTodayLabel">วันนี้</span>
         </button>
@@ -104,7 +102,7 @@
               <span>บันทึกรายการรับ-จ่ายด่วน</span>
             </div>
             <button type="button" class="quick-amt-btn" id="btnToggleNumpad" style="flex:0;white-space:nowrap;">
-              🔢 แป้นตัวเลขสัมผัส (iPad)
+              🔢 ซ่อน/แสดงแป้นตัวเลข
             </button>
           </div>
 
@@ -123,17 +121,21 @@
             </div>
 
             <form id="entryForm" novalidate>
-              <!-- Date Selection -->
+              <!-- Date Selection (Pure HTML Calendar Trigger - Zero iPadOS UIKit Overlay Bug) -->
               <div class="form-group">
                 <div class="form-label-row">
-                  <label class="form-label" id="entryDateLabel" for="entryDateInput">วันที่ของรายการ</label>
+                  <label class="form-label" id="entryDateLabel">วันที่ของรายการ</label>
                   <div style="display:flex;gap:6px;">
                     <button type="button" class="quick-tag" id="btnEntryToday">📍 วันนี้</button>
                     <button type="button" class="quick-tag" id="btnEntryTomorrow">+1 พรุ่งนี้</button>
                     <button type="button" class="quick-tag" id="btnEntryNext7Days" style="display:none;">+7 วัน</button>
                   </div>
                 </div>
-                <input type="date" id="entryDateInput" class="text-input" required />
+                <input type="hidden" id="entryDateInput" />
+                <button type="button" class="text-input" id="btnOpenEntryCalendar" style="text-align:left;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+                  <span id="entryDateDisplayText">📅 วันนี้</span>
+                  <span style="font-size:0.78rem;color:#4F46E5;">แตะเพื่อเลือกวันที่ ▾</span>
+                </button>
               </div>
 
               <!-- Recurrence Option (Visible when Scheduled mode is chosen) -->
@@ -147,9 +149,9 @@
                     <option value="installment">💳 ผ่อนชำระ (ระบุงวด เช่น 1/10)</option>
                   </select>
                   <div id="entryInstallmentWrap" style="display:none;gap:6px;align-items:center;">
-                    <input type="number" id="entryInstCurrent" class="text-input" placeholder="งวดที่" min="1" value="1" style="padding:8px;" />
+                    <input type="text" inputmode="numeric" id="entryInstCurrent" class="text-input" placeholder="งวดที่" value="1" style="padding:8px;" />
                     <span>/</span>
-                    <input type="number" id="entryInstTotal" class="text-input" placeholder="ทั้งหมด" min="2" value="10" style="padding:8px;" />
+                    <input type="text" inputmode="numeric" id="entryInstTotal" class="text-input" placeholder="ทั้งหมด" value="10" style="padding:8px;" />
                   </div>
                 </div>
               </div>
@@ -158,19 +160,17 @@
               <div class="form-group">
                 <div class="form-label-row">
                   <label class="form-label" for="entryAmountInput">จำนวนเงิน (บาท)</label>
-                  <span style="font-size:0.75rem;color:var(--text-secondary);">กดปุ่มลัดเพื่อบวกเพิ่มได้</span>
+                  <span style="font-size:0.75rem;color:var(--text-secondary);">กดแป้นตัวเลขด้านล่างหรือปุ่มลัดได้เลย</span>
                 </div>
                 <div class="amount-input-wrap">
-                  <span class="currency-prefix">฿</span>
+                  <span class="currency-prefix" style="pointer-events:none;">฿</span>
                   <input
-                    type="number"
+                    type="text"
                     id="entryAmountInput"
                     class="amount-input"
-                    placeholder="0.00"
-                    step="any"
-                    min="0.01"
+                    placeholder="0"
                     inputmode="decimal"
-                    required
+                    autocomplete="off"
                   />
                 </div>
                 <div class="quick-amounts">
@@ -181,8 +181,8 @@
                   <button type="button" class="quick-amt-btn" id="btnClearAmount" style="color:#E11D48;">ล้าง</button>
                 </div>
 
-                <!-- Touch Numpad -->
-                <div class="numpad-grid" id="ipadNumpad" style="display:none;">
+                <!-- Touch Numpad (Visible by default for instant tapping on iPad Portrait & Landscape) -->
+                <div class="numpad-grid" id="ipadNumpad" style="display:grid;">
                   <button type="button" class="numpad-btn" data-numpad="7">7</button>
                   <button type="button" class="numpad-btn" data-numpad="8">8</button>
                   <button type="button" class="numpad-btn" data-numpad="9">9</button>
@@ -425,7 +425,12 @@
               <div class="chart-title">🗓️ ปฏิทินรายเดือน (Calendar Heatmap)</div>
               <div class="chart-subtitle" id="calendarHeatmapSubtitle">แสดงยอด +รับ / -จ่าย ในแต่ละวันของเดือน คลิกที่ช่องวันเพื่อเลือกดูได้ทันที</div>
             </div>
-            <input type="month" id="dashMonthPicker" class="date-input-native" />
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-icon-nav" id="btnPrevMonthDash" style="width:32px;height:32px;">◀</button>
+              <span id="dashMonthLabel" style="font-size:0.84rem;font-weight:800;min-width:110px;text-align:center;">เดือนนี้</span>
+              <button type="button" class="btn-icon-nav" id="btnNextMonthDash" style="width:32px;height:32px;">▶</button>
+              <input type="hidden" id="dashMonthPicker" />
+            </div>
           </div>
           <div class="calendar-heatmap-grid" id="calendarHeatmapContainer"></div>
         </div>
@@ -449,10 +454,11 @@
             <div class="chart-subtitle">เปรียบเทียบเงินคงเหลือปัจจุบัน กับยอดรวมรายจ่ายล่วงหน้าที่ต้องชำระก่อนวันที่กำหนด</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <label style="font-size:0.82rem;font-weight:700;">
-              ก่อนวันที่:
-              <input type="date" id="targetCutoffDateInput" class="date-input-native" style="margin-left:4px;" />
-            </label>
+            <input type="hidden" id="targetCutoffDateInput" />
+            <button type="button" class="date-display-box" id="btnOpenTargetCalendar" style="cursor:pointer;">
+              <span>🎯 ก่อนวันที่:</span>
+              <strong id="targetCutoffDateDisplayText" style="color:#4F46E5;">เลือกวันเป้าหมาย</strong>
+            </button>
             <div class="segmented-control">
               <button type="button" class="filter-pill active" id="btnModeNetShortfall">หักเงินคงเหลือที่มี</button>
               <button type="button" class="filter-pill" id="btnModeGrossUpcoming">ยอดจ่ายล่วงหน้าเต็ม</button>
@@ -513,7 +519,12 @@
                   🗓️ แสดงรายเดือน
                 </button>
               </div>
-              <input type="month" id="monthPickerInput" class="date-input-native" aria-label="เลือกเดือน" />
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-icon-nav" id="btnPrevMonthTx" style="width:32px;height:32px;">◀</button>
+                <span id="txMonthLabel" style="font-size:0.84rem;font-weight:800;min-width:110px;text-align:center;">เดือนนี้</span>
+                <button type="button" class="btn-icon-nav" id="btnNextMonthTx" style="width:32px;height:32px;">▶</button>
+                <input type="hidden" id="monthPickerInput" />
+              </div>
             </div>
 
             <div class="segmented-control" role="group" aria-label="กรองประเภทรายรับรายจ่าย">
@@ -587,12 +598,12 @@
 
               <div class="form-group">
                 <label class="form-label" for="schAmountInput">จำนวนเงินที่ต้องเตรียม (บาท)</label>
-                <input type="number" id="schAmountInput" class="text-input" placeholder="0.00" step="any" min="0.01" required style="margin-top:6px;font-size:1.2rem;font-weight:800;" />
+                <input type="text" inputmode="decimal" id="schAmountInput" class="text-input" placeholder="0" style="margin-top:6px;font-size:1.2rem;font-weight:800;" />
               </div>
 
               <div class="form-group">
                 <div class="form-label-row">
-                  <label class="form-label" for="schDueDateInput">กำหนดชำระก่อนวันที่ (Due Date)</label>
+                  <label class="form-label">กำหนดชำระก่อนวันที่ (Due Date)</label>
                   <div style="display:flex;gap:6px;">
                     <button type="button" class="quick-tag" data-sch-offset="3">อีก 3 วัน</button>
                     <button type="button" class="quick-tag" data-sch-offset="7">อีก 7 วัน</button>
@@ -600,7 +611,11 @@
                     <button type="button" class="quick-tag" data-sch-offset="30">อีก 1 เดือน</button>
                   </div>
                 </div>
-                <input type="date" id="schDueDateInput" class="text-input" required />
+                <input type="hidden" id="schDueDateInput" />
+                <button type="button" class="text-input" id="btnOpenSchCalendar" style="text-align:left;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+                  <span id="schDueDateDisplayText">📅 เลือกวันครบกำหนด</span>
+                  <span style="font-size:0.78rem;color:#4F46E5;">แตะเพื่อเลือกวันที่ ▾</span>
+                </button>
               </div>
 
               <!-- Recurrence & Installment Tracker -->
@@ -615,11 +630,11 @@
                 <div id="schInstallmentFields" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
                   <div>
                     <label class="form-label">งวดปัจจุบันที่กำลังจะจ่าย</label>
-                    <input type="number" id="schInstCurInput" class="text-input" min="1" value="1" />
+                    <input type="text" inputmode="numeric" id="schInstCurInput" class="text-input" value="1" />
                   </div>
                   <div>
                     <label class="form-label">จำนวนงวดทั้งหมด</label>
-                    <input type="number" id="schInstTotalInput" class="text-input" min="2" value="10" />
+                    <input type="text" inputmode="numeric" id="schInstTotalInput" class="text-input" value="10" />
                   </div>
                 </div>
               </div>
@@ -843,14 +858,17 @@
               </select>
             </div>
             <div>
-              <label class="form-label" for="editTxDateInput">วันที่</label>
-              <input type="date" id="editTxDateInput" class="text-input" required style="margin-top:6px;" />
+              <label class="form-label">วันที่</label>
+              <input type="hidden" id="editTxDateInput" />
+              <button type="button" class="text-input" id="btnOpenEditTxCalendar" style="margin-top:6px;text-align:left;font-weight:700;cursor:pointer;">
+                📅 เลือกวันที่
+              </button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="editTxAmountInput">จำนวนเงิน (บาท)</label>
-            <input type="number" id="editTxAmountInput" class="text-input" step="any" min="0.01" required style="margin-top:6px;font-size:1.3rem;font-weight:800;" />
+            <input type="text" inputmode="decimal" id="editTxAmountInput" class="text-input" style="margin-top:6px;font-size:1.3rem;font-weight:800;" />
           </div>
 
           <div class="form-group">
@@ -860,7 +878,7 @@
 
           <div class="form-group">
             <label class="form-label" for="editTxTitleInput">ชื่อรายการ</label>
-            <input type="text" id="editTxTitleInput" class="text-input" required style="margin-top:6px;" />
+            <input type="text" id="editTxTitleInput" class="text-input" style="margin-top:6px;" />
           </div>
 
           <div class="form-group">
@@ -891,9 +909,37 @@
     </div>
   </div>
 
-  <!-- Toast Notifications -->
-  <div class="toast-container" id="toastContainer"></div>
+  <!-- =================================================================
+       MODAL 4: ปฏิทินเลือกวันที่แบบ Pure HTML (100% รองรับ iPad แนวตั้ง ไม่ใช้ UIKit DatePicker)
+       ================================================================= -->
+  <div class="modal-backdrop" id="customCalendarModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="modal-header">
+        <div style="font-weight:800;font-size:1rem;">📅 เลือกวันที่</div>
+        <button type="button" id="btnCloseCustomCalendar" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+          <button type="button" class="quick-amt-btn" data-cal-quick="0" style="background:#DBEAFE;color:#1D4ED8;border-color:#93C5FD;">📍 วันนี้</button>
+          <button type="button" class="quick-amt-btn" data-cal-quick="-1">เมื่อวาน</button>
+          <button type="button" class="quick-amt-btn" data-cal-quick="1">+1 พรุ่งนี้</button>
+          <button type="button" class="quick-amt-btn" data-cal-quick="7">+7 วัน</button>
+        </div>
 
-  <script src="./app.js?v=7"></script>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <button type="button" class="btn-icon-nav" id="btnCalModalPrevMonth">◀</button>
+          <strong id="calModalMonthTitle" style="font-size:1rem;">เดือนนี้</strong>
+          <button type="button" class="btn-icon-nav" id="btnCalModalNextMonth">▶</button>
+        </div>
+
+        <div class="calendar-heatmap-grid" id="calModalDaysGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer" style="pointer-events:none;"></div>
+
+  <script src="./app.js?v=8"></script>
 </body>
 </html>
