@@ -2,12 +2,12 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="KrapaoFlow" />
   <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
-  <link rel="manifest" href="./manifest.json" />
+  <link rel="manifest" href="./manifest.json?v=6" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icon.svg" />
   <style>
@@ -63,11 +63,11 @@ body {
   padding-bottom: 80px;
 }
 
-/* Top Header */
+/* Top Header (with iPadOS Standalone Safe-Area Inset support) */
 .topbar {
   background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
   color: #FFFFFF;
-  padding: 12px 24px;
+  padding: max(14px, calc(env(safe-area-inset-top, 0px) + 10px)) 24px 12px;
   position: relative;
   z-index: 120;
 }
@@ -119,12 +119,11 @@ body {
   color: #38BDF8;
 }
 
-/* Primary Navigation Bar (Sticky at top:0 so it never collides with topbar on iPad) */
+/* Primary Navigation Bar */
 .primary-nav-wrap {
   background: #FFFFFF;
   border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 115;
   box-shadow: var(--shadow-sm);
 }
@@ -143,8 +142,28 @@ button,
 .btn-icon-nav,
 .cal-day-cell {
   touch-action: manipulation;
-  -webkit-user-select: none;
-  user-select: none;
+  cursor: pointer;
+}
+
+/* Critical iPadOS WebKit Standalone Fix: prevent child spans inside buttons from splitting touchstart/touchend targets */
+button > *,
+.cat-chip *,
+.nav-tab-btn > *,
+.type-tab > *,
+.btn-submit > *,
+.btn-today > *,
+.wifi-sync-pill > *,
+.btn-action-sm > *,
+.cal-day-cell * {
+  pointer-events: none;
+}
+
+button:active,
+.cat-chip:active,
+.quick-amt-btn:active,
+.filter-pill:active,
+.nav-tab-btn:active {
+  transform: scale(0.97);
 }
 
 .primary-nav-inner {
@@ -1472,12 +1491,18 @@ button,
         </div>
       </div>
 
-      <!-- Real-time Connection & Same Wi-Fi Auto-Sync Status Pill -->
-      <button class="wifi-sync-pill" id="btnTopSyncPill" title="คลิกเพื่อเปิดหมวดการเชื่อมต่อและตั้งค่าการซิงค์ Wi-Fi">
-        <span class="sync-dot" id="syncDot"></span>
-        <span id="syncStatusText">กำลังตรวจสอบเครือข่าย...</span>
-        <span style="opacity:0.8;font-size:0.74rem;" id="syncPeerCountBadge"></span>
-      </button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <!-- Real-time Connection & Same Wi-Fi Auto-Sync Status Pill -->
+        <button type="button" class="wifi-sync-pill" id="btnTopSyncPill" title="คลิกเพื่อเปิดหมวดการเชื่อมต่อและตั้งค่าการซิงค์ Wi-Fi">
+          <span class="sync-dot" id="syncDot"></span>
+          <span id="syncStatusText">กำลังตรวจสอบเครือข่าย...</span>
+          <span style="opacity:0.8;font-size:0.74rem;" id="syncPeerCountBadge"></span>
+        </button>
+        <!-- Quick Refresh Button for iPad Home Screen Standalone Mode -->
+        <button type="button" class="wifi-sync-pill" id="btnForceReloadApp" title="กดเพื่ออัปเดตและรีเฟรชแอปบนหน้าจอโฮม iPad" style="padding:6px 12px;background:rgba(56,189,248,0.18);border-color:rgba(56,189,248,0.4);">
+          <span>↻ รีเฟรชแอป</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -4085,6 +4110,67 @@ button,
   }
 
   function initEvents() {
+    // iPadOS Home Screen Standalone Touch Bridge: ensures every single tap on a button fires reliably even if WebKit swallows synthetic click
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTarget = null;
+    let lastClickTime = 0;
+
+    document.addEventListener('click', () => {
+      lastClickTime = Date.now();
+    }, true);
+
+    document.addEventListener('touchstart', e => {
+      if (e.touches && e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTarget = e.target.closest('button, .cal-day-cell, [data-chart-pick-date], [data-pick-month], [data-set-target-date]');
+      } else {
+        touchStartTarget = null;
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+      if (!touchStartTarget || !e.changedTouches || e.changedTouches.length !== 1) return;
+      const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+      const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+      const targetBtn = touchStartTarget;
+      touchStartTarget = null;
+      if (dx < 14 && dy < 14) {
+        const endTime = Date.now();
+        setTimeout(() => {
+          if (lastClickTime < endTime) {
+            targetBtn.click();
+          }
+        }, 65);
+      }
+    }, { passive: true });
+
+    // Close modals when tapping backdrop on iPad
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', e => {
+        if (e.target === backdrop) backdrop.classList.remove('open');
+      });
+    });
+
+    const btnForceReload = document.getElementById('btnForceReloadApp');
+    if (btnForceReload) {
+      btnForceReload.addEventListener('click', async () => {
+        showToast('กำลังอัปเดตและรีเฟรชแอป...', '↻');
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) await r.unregister();
+          }
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            for (const k of keys) await caches.delete(k);
+          }
+        } catch (e) {}
+        window.location.replace(window.location.pathname + '?v=' + Date.now());
+      });
+    }
+
     document.querySelectorAll('[data-nav-view]').forEach(btn => {
       btn.addEventListener('click', () => switchView(btn.dataset.navView));
     });
@@ -4766,7 +4852,19 @@ button,
     initEvents();
 
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js?v=6').then(reg => {
+        reg.update().catch(() => {});
+      }).catch(() => {});
+
+      if ('caches' in window) {
+        caches.keys().then(keys => {
+          keys.forEach(k => {
+            if (k !== 'krapaoflow-v6-homescreen-fix') {
+              caches.delete(k).catch(() => {});
+            }
+          });
+        }).catch(() => {});
+      }
     }
 
     initSameWifiP2pChannel();

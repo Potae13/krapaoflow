@@ -1,9 +1,10 @@
-const CACHE_NAME = 'krapaoflow-v5-ipad-fix';
-const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.json', './icon.svg'];
+const CACHE_NAME = 'krapaoflow-v6-homescreen-fix';
+const ASSETS = ['./', './index.html', './styles.css?v=6', './app.js?v=6', './manifest.json?v=6', './icon.svg'];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => {})
   );
 });
 
@@ -21,12 +22,12 @@ self.addEventListener('fetch', event => {
     return;
   }
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'no-cache' })
       .then(response => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request, { ignoreSearch: true }))
   );
 });

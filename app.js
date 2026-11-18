@@ -1759,6 +1759,67 @@
   }
 
   function initEvents() {
+    // iPadOS Home Screen Standalone Touch Bridge: ensures every single tap on a button fires reliably even if WebKit swallows synthetic click
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTarget = null;
+    let lastClickTime = 0;
+
+    document.addEventListener('click', () => {
+      lastClickTime = Date.now();
+    }, true);
+
+    document.addEventListener('touchstart', e => {
+      if (e.touches && e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTarget = e.target.closest('button, .cal-day-cell, [data-chart-pick-date], [data-pick-month], [data-set-target-date]');
+      } else {
+        touchStartTarget = null;
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+      if (!touchStartTarget || !e.changedTouches || e.changedTouches.length !== 1) return;
+      const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+      const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+      const targetBtn = touchStartTarget;
+      touchStartTarget = null;
+      if (dx < 14 && dy < 14) {
+        const endTime = Date.now();
+        setTimeout(() => {
+          if (lastClickTime < endTime) {
+            targetBtn.click();
+          }
+        }, 65);
+      }
+    }, { passive: true });
+
+    // Close modals when tapping backdrop on iPad
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', e => {
+        if (e.target === backdrop) backdrop.classList.remove('open');
+      });
+    });
+
+    const btnForceReload = document.getElementById('btnForceReloadApp');
+    if (btnForceReload) {
+      btnForceReload.addEventListener('click', async () => {
+        showToast('กำลังอัปเดตและรีเฟรชแอป...', '↻');
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) await r.unregister();
+          }
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            for (const k of keys) await caches.delete(k);
+          }
+        } catch (e) {}
+        window.location.replace(window.location.pathname + '?v=' + Date.now());
+      });
+    }
+
     document.querySelectorAll('[data-nav-view]').forEach(btn => {
       btn.addEventListener('click', () => switchView(btn.dataset.navView));
     });
@@ -2440,7 +2501,19 @@
     initEvents();
 
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js?v=6').then(reg => {
+        reg.update().catch(() => {});
+      }).catch(() => {});
+
+      if ('caches' in window) {
+        caches.keys().then(keys => {
+          keys.forEach(k => {
+            if (k !== 'krapaoflow-v6-homescreen-fix') {
+              caches.delete(k).catch(() => {});
+            }
+          });
+        }).catch(() => {});
+      }
     }
 
     initSameWifiP2pChannel();

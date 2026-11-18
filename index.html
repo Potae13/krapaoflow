@@ -2,15 +2,15 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="KrapaoFlow" />
   <title>KrapaoFlow — บันทึกรายรับ-รายจ่าย • แดชบอร์ดกราฟ • ซิงค์ Wi-Fi เดียวกัน</title>
-  <link rel="manifest" href="./manifest.json" />
+  <link rel="manifest" href="./manifest.json?v=6" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icon.svg" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=6" />
 </head>
 <body>
   <!-- Top Header -->
@@ -29,12 +29,18 @@
         </div>
       </div>
 
-      <!-- Real-time Connection & Same Wi-Fi Auto-Sync Status Pill -->
-      <button class="wifi-sync-pill" id="btnTopSyncPill" title="คลิกเพื่อเปิดหมวดการเชื่อมต่อและตั้งค่าการซิงค์ Wi-Fi">
-        <span class="sync-dot" id="syncDot"></span>
-        <span id="syncStatusText">กำลังตรวจสอบเครือข่าย...</span>
-        <span style="opacity:0.8;font-size:0.74rem;" id="syncPeerCountBadge"></span>
-      </button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <!-- Real-time Connection & Same Wi-Fi Auto-Sync Status Pill -->
+        <button type="button" class="wifi-sync-pill" id="btnTopSyncPill" title="คลิกเพื่อเปิดหมวดการเชื่อมต่อและตั้งค่าการซิงค์ Wi-Fi">
+          <span class="sync-dot" id="syncDot"></span>
+          <span id="syncStatusText">กำลังตรวจสอบเครือข่าย...</span>
+          <span style="opacity:0.8;font-size:0.74rem;" id="syncPeerCountBadge"></span>
+        </button>
+        <!-- Quick Refresh Button for iPad Home Screen Standalone Mode -->
+        <button type="button" class="wifi-sync-pill" id="btnForceReloadApp" title="กดเพื่ออัปเดตและรีเฟรชแอปบนหน้าจอโฮม iPad" style="padding:6px 12px;background:rgba(56,189,248,0.18);border-color:rgba(56,189,248,0.4);">
+          <span>↻ รีเฟรชแอป</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -880,6 +886,6 @@
   <!-- Toast Notifications -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="./app.js"></script>
+  <script src="./app.js?v=6"></script>
 </body>
 </html>
