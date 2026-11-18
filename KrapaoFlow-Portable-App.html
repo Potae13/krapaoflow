@@ -2707,9 +2707,163 @@ button:active,
       },
       categories: createInitialCategories(),
       transactions: [],
-      scheduledExpenses: []
+      scheduledExpenses: [
+        {
+          id: "sch-user-2026-11-23-internet",
+          title: "ค่าเน็ต",
+          amount: 200,
+          category: "exp_bills",
+          dueDate: "2026-11-23",
+          recurrence: "monthly",
+          installmentCurrent: 0,
+          installmentTotal: 0,
+          note: "",
+          isPaid: false,
+          updatedAt: 1794939500000,
+          device: "MacBook",
+          deleted: false
+        },
+        {
+          id: "sch-user-2026-12-01-google-ai",
+          title: "Google AI pro",
+          amount: 279,
+          category: "exp_bills",
+          dueDate: "2026-12-01",
+          recurrence: "monthly",
+          installmentCurrent: 0,
+          installmentTotal: 0,
+          note: "",
+          isPaid: false,
+          updatedAt: 1794939500000,
+          device: "MacBook",
+          deleted: false
+        },
+        {
+          id: "sch-user-2026-12-04-car-payment",
+          title: "งวดรถ",
+          amount: 4018,
+          category: "exp_bills",
+          dueDate: "2026-12-04",
+          recurrence: "monthly",
+          installmentCurrent: 0,
+          installmentTotal: 0,
+          note: "",
+          isPaid: false,
+          updatedAt: 1794939500000,
+          device: "MacBook",
+          deleted: false
+        },
+        {
+          id: "sch-user-2026-12-12-insurance-2",
+          title: "ค่าประกันงวด 2",
+          amount: 1100,
+          category: "exp_bills",
+          dueDate: "2026-12-12",
+          recurrence: "installment",
+          installmentCurrent: 2,
+          installmentTotal: 3,
+          note: "",
+          isPaid: false,
+          updatedAt: 1794939500000,
+          device: "MacBook",
+          deleted: false
+        },
+        {
+          id: "sch-user-2026-12-25-payback-gib",
+          title: "คืนตางกิ๊บ 1000",
+          amount: 1000,
+          category: "exp_bills",
+          dueDate: "2026-12-25",
+          recurrence: "none",
+          installmentCurrent: 0,
+          installmentTotal: 0,
+          note: "",
+          isPaid: false,
+          updatedAt: 1794939500000,
+          device: "MacBook",
+          deleted: false
+        }
+      ]
     }
   };
+
+  const USER_SCHEDULED_EXPENSES = [
+    {
+      id: "sch-user-2026-11-23-internet",
+      title: "ค่าเน็ต",
+      amount: 200,
+      category: "exp_bills",
+      dueDate: "2026-11-23",
+      recurrence: "monthly",
+      installmentCurrent: 0,
+      installmentTotal: 0,
+      note: "",
+      isPaid: false,
+      updatedAt: 1794939500000,
+      device: "MacBook",
+      deleted: false
+    },
+    {
+      id: "sch-user-2026-12-01-google-ai",
+      title: "Google AI pro",
+      amount: 279,
+      category: "exp_bills",
+      dueDate: "2026-12-01",
+      recurrence: "monthly",
+      installmentCurrent: 0,
+      installmentTotal: 0,
+      note: "",
+      isPaid: false,
+      updatedAt: 1794939500000,
+      device: "MacBook",
+      deleted: false
+    },
+    {
+      id: "sch-user-2026-12-04-car-payment",
+      title: "งวดรถ",
+      amount: 4018,
+      category: "exp_bills",
+      dueDate: "2026-12-04",
+      recurrence: "monthly",
+      installmentCurrent: 0,
+      installmentTotal: 0,
+      note: "",
+      isPaid: false,
+      updatedAt: 1794939500000,
+      device: "MacBook",
+      deleted: false
+    },
+    {
+      id: "sch-user-2026-12-12-insurance-2",
+      title: "ค่าประกันงวด 2",
+      amount: 1100,
+      category: "exp_bills",
+      dueDate: "2026-12-12",
+      recurrence: "installment",
+      installmentCurrent: 2,
+      installmentTotal: 3,
+      note: "",
+      isPaid: false,
+      updatedAt: 1794939500000,
+      device: "MacBook",
+      deleted: false
+    },
+    {
+      id: "sch-user-2026-12-25-payback-gib",
+      title: "คืนตางกิ๊บ 1000",
+      amount: 1000,
+      category: "exp_bills",
+      dueDate: "2026-12-25",
+      recurrence: "none",
+      installmentCurrent: 0,
+      installmentTotal: 0,
+      note: "",
+      isPaid: false,
+      updatedAt: 1794939500000,
+      device: "MacBook",
+      deleted: false
+    }
+  ];
 
   const localChannel = typeof BroadcastChannel !== 'undefined'
     ? new BroadcastChannel('krapaoflow_local_channel_v4')
@@ -2736,6 +2890,22 @@ button:active,
           }
         }
       }
+
+      if (!Array.isArray(state.store.scheduledExpenses)) {
+        state.store.scheduledExpenses = [];
+      }
+      const oldTestIds = new Set(['sch-1794935293091-fofp', 'sch-1794936258057-8omf', 'sch-1794936329941-1kds', 'sch-1794936470842-h0ut', 'sch-1794936518075-etag']);
+      state.store.scheduledExpenses = state.store.scheduledExpenses.filter(s => !oldTestIds.has(s.id));
+
+      for (const item of USER_SCHEDULED_EXPENSES) {
+        const idx = state.store.scheduledExpenses.findIndex(s => s.id === item.id);
+        if (idx >= 0) {
+          state.store.scheduledExpenses[idx] = { ...state.store.scheduledExpenses[idx], ...item };
+        } else {
+          state.store.scheduledExpenses.push(item);
+        }
+      }
+      saveLocalStore();
     } catch (e) {
       console.warn('Could not load local store:', e);
     }
