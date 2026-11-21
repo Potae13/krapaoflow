@@ -966,45 +966,50 @@
   </div>
 
   <!-- =================================================================
-       MODAL 5: ดึงข้อมูลจากข้อความ Krungthai Connext / LINE (1-Click Smart Import)
+       MODAL 5: ดึงข้อมูลจากไฟล์ประวัติแชท LINE / Krungthai Connext (1-Click Multi-Import)
        ================================================================= -->
   <div class="modal-backdrop" id="lineImportModalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal-card" style="max-width:540px;">
+    <div class="modal-card" style="max-width:560px;">
       <div class="modal-header" style="background:#06C755;">
         <div style="font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;">
           <span>💬</span>
-          <span>ดึงข้อมูลจาก Krungthai Connext & LINE</span>
+          <span>นำเข้าประวัติแชท Krungthai Connext (ดึงทีเดียวทั้งเดือน)</span>
         </div>
         <button type="button" id="btnCloseLineImportModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
         <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:0.82rem;color:#166534;line-height:1.5;">
-          <strong>📱 วิธีใช้งานง่ายๆ ใน 2 ขั้นตอน:</strong><br/>
-          1. ในแอป LINE เปิดแชท <strong>Krungthai Connext</strong> ➔ <strong>กดค้างที่ข้อความแจ้งเตือน</strong> ➔ แตะ <strong>"คัดลอก" (Copy)</strong> (จะเลือกหลายๆ ข้อความก็ได้)<br/>
-          2. สลับมาที่นี่ กดปุ่มสีเขียว <strong>"📋 วางข้อความที่ก็อปมา"</strong> ด้านล่างนี้ได้เลย ระบบจะแกะยอดเงิน วันที่ และรายการให้ทันที!
+          <strong>📁 วิธีส่งออกไฟล์แชทจาก LINE (ทำครั้งเดียวได้ 20-100 รายการ):</strong><br/>
+          1. ใน LINE แชท <strong>Krungthai Connext</strong> กดปุ่ม <strong>`≡` (มุมขวาบน) ➔ `⚙️ ตั้งค่า` ➔ "ส่งออกประวัติการแชท"</strong><br/>
+          2. จะได้ไฟล์ <strong>.txt</strong> กดเลือกไฟล์นั้นด้านล่างนี้ได้เลย ระบบจะแยกทุกรายการให้ทันทีครับ!
         </div>
 
+        <!-- Big File Drop Zone & Selection Button -->
+        <div id="lineFileDropZone" style="border:2px dashed #06C755;background:#F8FAFC;border-radius:14px;padding:20px 16px;text-align:center;cursor:pointer;margin-bottom:14px;transition:all 0.2s;">
+          <input type="file" id="lineChatFileInput" accept=".txt,text/plain" style="display:none;" />
+          <div style="font-size:2rem;margin-bottom:6px;">📂</div>
+          <div style="font-weight:800;font-size:0.95rem;color:#0F172A;margin-bottom:4px;" id="lineDropZoneTitle">
+            แตะที่นี่เพื่อเลือกไฟล์แชท LINE (.txt)
+          </div>
+          <div style="font-size:0.78rem;color:#64748B;">
+            หรือลากไฟล์ .txt ที่ได้จาก LINE มาวางตรงนี้ (ดึงได้หมดทั้ง 20-100 รายการ)
+          </div>
+        </div>
+
+        <!-- Or Paste Manually Toggle -->
         <div style="margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <label class="form-label">กล่องข้อความจาก LINE / Krungthai Connext:</label>
-            <button type="button" class="quick-amt-btn" id="btnPasteClipboardLine" style="background:#06C755;color:#FFF;border:none;font-weight:700;padding:5px 12px;font-size:0.78rem;">
-              📋 แตะเพื่อวางข้อความที่ก็อปมา
+            <label class="form-label" style="font-size:0.78rem;color:var(--text-secondary);">หรือคัดลอกข้อความในไฟล์มาวางในช่องนี้:</label>
+            <button type="button" class="quick-amt-btn" id="btnPasteClipboardLine" style="background:#06C755;color:#FFF;border:none;font-weight:700;padding:4px 10px;font-size:0.75rem;">
+              📋 วางจากคลิปบอร์ด
             </button>
           </div>
-          <textarea id="lineImportTextarea" class="text-input" style="height:110px;font-size:0.86rem;resize:vertical;" placeholder="วางข้อความที่คัดลอกมาจาก Krungthai Connext เช่น
-เงินโอนออก
-จำนวนเงิน 200.00 บาท
-วันที่ 23 พ.ย. 69
-ไปยัง ค่าเน็ต
-
-หรือข้อความจดหลายบรรทัด เช่น:
-23 พย ค่าเน็ต 200
-1 ธค Google AI pro 279"></textarea>
+          <textarea id="lineImportTextarea" class="text-input" style="height:90px;font-size:0.82rem;resize:vertical;" placeholder="เนื้อหาไฟล์แชท LINE หรือข้อความ Krungthai Connext จะแสดงที่นี่..."></textarea>
         </div>
 
         <div style="display:flex;gap:8px;margin-bottom:16px;">
           <button type="button" class="btn-submit" id="btnParseLineText" style="background:#0F172A;color:#FFF;padding:10px;font-size:0.9rem;">
-            🔍 สแกนและถอดรหัสรายการ
+            🔍 สแกนและถอดรหัสทุกรายการ
           </button>
           <button type="button" class="quick-amt-btn" id="btnClearLineText" style="flex:0;white-space:nowrap;padding:0 14px;">
             ล้าง
@@ -1013,13 +1018,19 @@
 
         <!-- Parsed Results Container -->
         <div id="lineImportPreviewWrap" style="display:none;">
-          <div style="font-weight:800;font-size:0.9rem;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-            <span>รายการที่ระบบตรวจพบ (<span id="lineDetectedCount">0</span> รายการ):</span>
-            <span style="font-size:0.75rem;color:var(--text-secondary);">ตรวจทานก่อนบันทึก</span>
+          <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <span style="font-weight:800;color:#1E1B4B;font-size:0.95rem;">ตรวจพบทั้งหมด <span id="lineDetectedCount">0</span> รายการ</span>
+            </div>
+            <div style="display:flex;gap:12px;font-size:0.82rem;font-weight:700;">
+              <span style="color:#059669;" id="lineTotalIncomeSummary">+฿0</span>
+              <span style="color:#E11D48;" id="lineTotalExpenseSummary">-฿0</span>
+            </div>
           </div>
-          <div id="lineParsedList" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
 
-          <button type="button" class="btn-submit scheduled" id="btnConfirmSaveLineItems" style="font-size:0.95rem;padding:12px;">
+          <div id="lineParsedList" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+          <button type="button" class="btn-submit scheduled" id="btnConfirmSaveLineItems" style="font-size:1rem;padding:13px;">
             💾 ยืนยันบันทึกทุกรายการเข้าแอปทันที
           </button>
         </div>

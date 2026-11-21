@@ -2498,45 +2498,50 @@ button:active,
   </div>
 
   <!-- =================================================================
-       MODAL 5: ดึงข้อมูลจากข้อความ Krungthai Connext / LINE (1-Click Smart Import)
+       MODAL 5: ดึงข้อมูลจากไฟล์ประวัติแชท LINE / Krungthai Connext (1-Click Multi-Import)
        ================================================================= -->
   <div class="modal-backdrop" id="lineImportModalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal-card" style="max-width:540px;">
+    <div class="modal-card" style="max-width:560px;">
       <div class="modal-header" style="background:#06C755;">
         <div style="font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;">
           <span>💬</span>
-          <span>ดึงข้อมูลจาก Krungthai Connext & LINE</span>
+          <span>นำเข้าประวัติแชท Krungthai Connext (ดึงทีเดียวทั้งเดือน)</span>
         </div>
         <button type="button" id="btnCloseLineImportModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
         <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:0.82rem;color:#166534;line-height:1.5;">
-          <strong>📱 วิธีใช้งานง่ายๆ ใน 2 ขั้นตอน:</strong><br/>
-          1. ในแอป LINE เปิดแชท <strong>Krungthai Connext</strong> ➔ <strong>กดค้างที่ข้อความแจ้งเตือน</strong> ➔ แตะ <strong>"คัดลอก" (Copy)</strong> (จะเลือกหลายๆ ข้อความก็ได้)<br/>
-          2. สลับมาที่นี่ กดปุ่มสีเขียว <strong>"📋 วางข้อความที่ก็อปมา"</strong> ด้านล่างนี้ได้เลย ระบบจะแกะยอดเงิน วันที่ และรายการให้ทันที!
+          <strong>📁 วิธีส่งออกไฟล์แชทจาก LINE (ทำครั้งเดียวได้ 20-100 รายการ):</strong><br/>
+          1. ใน LINE แชท <strong>Krungthai Connext</strong> กดปุ่ม <strong>`≡` (มุมขวาบน) ➔ `⚙️ ตั้งค่า` ➔ "ส่งออกประวัติการแชท"</strong><br/>
+          2. จะได้ไฟล์ <strong>.txt</strong> กดเลือกไฟล์นั้นด้านล่างนี้ได้เลย ระบบจะแยกทุกรายการให้ทันทีครับ!
         </div>
 
+        <!-- Big File Drop Zone & Selection Button -->
+        <div id="lineFileDropZone" style="border:2px dashed #06C755;background:#F8FAFC;border-radius:14px;padding:20px 16px;text-align:center;cursor:pointer;margin-bottom:14px;transition:all 0.2s;">
+          <input type="file" id="lineChatFileInput" accept=".txt,text/plain" style="display:none;" />
+          <div style="font-size:2rem;margin-bottom:6px;">📂</div>
+          <div style="font-weight:800;font-size:0.95rem;color:#0F172A;margin-bottom:4px;" id="lineDropZoneTitle">
+            แตะที่นี่เพื่อเลือกไฟล์แชท LINE (.txt)
+          </div>
+          <div style="font-size:0.78rem;color:#64748B;">
+            หรือลากไฟล์ .txt ที่ได้จาก LINE มาวางตรงนี้ (ดึงได้หมดทั้ง 20-100 รายการ)
+          </div>
+        </div>
+
+        <!-- Or Paste Manually Toggle -->
         <div style="margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <label class="form-label">กล่องข้อความจาก LINE / Krungthai Connext:</label>
-            <button type="button" class="quick-amt-btn" id="btnPasteClipboardLine" style="background:#06C755;color:#FFF;border:none;font-weight:700;padding:5px 12px;font-size:0.78rem;">
-              📋 แตะเพื่อวางข้อความที่ก็อปมา
+            <label class="form-label" style="font-size:0.78rem;color:var(--text-secondary);">หรือคัดลอกข้อความในไฟล์มาวางในช่องนี้:</label>
+            <button type="button" class="quick-amt-btn" id="btnPasteClipboardLine" style="background:#06C755;color:#FFF;border:none;font-weight:700;padding:4px 10px;font-size:0.75rem;">
+              📋 วางจากคลิปบอร์ด
             </button>
           </div>
-          <textarea id="lineImportTextarea" class="text-input" style="height:110px;font-size:0.86rem;resize:vertical;" placeholder="วางข้อความที่คัดลอกมาจาก Krungthai Connext เช่น
-เงินโอนออก
-จำนวนเงิน 200.00 บาท
-วันที่ 23 พ.ย. 69
-ไปยัง ค่าเน็ต
-
-หรือข้อความจดหลายบรรทัด เช่น:
-23 พย ค่าเน็ต 200
-1 ธค Google AI pro 279"></textarea>
+          <textarea id="lineImportTextarea" class="text-input" style="height:90px;font-size:0.82rem;resize:vertical;" placeholder="เนื้อหาไฟล์แชท LINE หรือข้อความ Krungthai Connext จะแสดงที่นี่..."></textarea>
         </div>
 
         <div style="display:flex;gap:8px;margin-bottom:16px;">
           <button type="button" class="btn-submit" id="btnParseLineText" style="background:#0F172A;color:#FFF;padding:10px;font-size:0.9rem;">
-            🔍 สแกนและถอดรหัสรายการ
+            🔍 สแกนและถอดรหัสทุกรายการ
           </button>
           <button type="button" class="quick-amt-btn" id="btnClearLineText" style="flex:0;white-space:nowrap;padding:0 14px;">
             ล้าง
@@ -2545,13 +2550,19 @@ button:active,
 
         <!-- Parsed Results Container -->
         <div id="lineImportPreviewWrap" style="display:none;">
-          <div style="font-weight:800;font-size:0.9rem;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-            <span>รายการที่ระบบตรวจพบ (<span id="lineDetectedCount">0</span> รายการ):</span>
-            <span style="font-size:0.75rem;color:var(--text-secondary);">ตรวจทานก่อนบันทึก</span>
+          <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <span style="font-weight:800;color:#1E1B4B;font-size:0.95rem;">ตรวจพบทั้งหมด <span id="lineDetectedCount">0</span> รายการ</span>
+            </div>
+            <div style="display:flex;gap:12px;font-size:0.82rem;font-weight:700;">
+              <span style="color:#059669;" id="lineTotalIncomeSummary">+฿0</span>
+              <span style="color:#E11D48;" id="lineTotalExpenseSummary">-฿0</span>
+            </div>
           </div>
-          <div id="lineParsedList" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
 
-          <button type="button" class="btn-submit scheduled" id="btnConfirmSaveLineItems" style="font-size:0.95rem;padding:12px;">
+          <div id="lineParsedList" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+          <button type="button" class="btn-submit scheduled" id="btnConfirmSaveLineItems" style="font-size:1rem;padding:13px;">
             💾 ยืนยันบันทึกทุกรายการเข้าแอปทันที
           </button>
         </div>
@@ -5460,6 +5471,58 @@ button:active,
       });
     }
 
+    // LINE Chat File Drag & Drop + File Selection
+    const lineDropZone = document.getElementById('lineFileDropZone');
+    const lineFileInput = document.getElementById('lineChatFileInput');
+
+    if (lineDropZone && lineFileInput) {
+      lineDropZone.addEventListener('click', () => {
+        lineFileInput.click();
+      });
+
+      lineFileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) {
+          handleLineChatFile(e.target.files[0]);
+        }
+      });
+
+      lineDropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        lineDropZone.style.background = '#ECFDF5';
+        lineDropZone.style.borderColor = '#059669';
+      });
+
+      lineDropZone.addEventListener('dragleave', e => {
+        e.preventDefault();
+        lineDropZone.style.background = '#F8FAFC';
+        lineDropZone.style.borderColor = '#06C755';
+      });
+
+      lineDropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        lineDropZone.style.background = '#F8FAFC';
+        lineDropZone.style.borderColor = '#06C755';
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleLineChatFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    function handleLineChatFile(file) {
+      if (!file) return;
+      const titleEl = document.getElementById('lineDropZoneTitle');
+      if (titleEl) titleEl.textContent = `📂 ไฟล์: ${file.name}`;
+
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const text = ev.target.result || '';
+        document.getElementById('lineImportTextarea').value = text;
+        doParseAndRenderLineText();
+        showToast(`อ่านไฟล์ "${file.name}" เรียบร้อยแล้ว!`, '📄');
+      };
+      reader.readAsText(file);
+    }
+
     const btnPasteLine = document.getElementById('btnPasteClipboardLine');
     if (btnPasteLine) {
       btnPasteLine.addEventListener('click', async () => {
@@ -5492,6 +5555,8 @@ button:active,
       btnClearLine.addEventListener('click', () => {
         document.getElementById('lineImportTextarea').value = '';
         document.getElementById('lineImportPreviewWrap').style.display = 'none';
+        const titleEl = document.getElementById('lineDropZoneTitle');
+        if (titleEl) titleEl.textContent = 'แตะที่นี่เพื่อเลือกไฟล์แชท LINE (.txt)';
         parsedLineItems = [];
       });
     }
@@ -5509,7 +5574,7 @@ button:active,
         const todayStr = getTodayStr(0);
 
         checkedItems.forEach((item, idx) => {
-          // If date is in the future, save as scheduled expense; otherwise save as transaction
+          // If date is strictly in the future, save as scheduled expense; otherwise save as actual transaction
           if (item.date > todayStr) {
             state.store.scheduledExpenses.push({
               id: `sch-line-${now}-${idx}`,
@@ -5520,7 +5585,7 @@ button:active,
               recurrence: 'none',
               installmentCurrent: 0,
               installmentTotal: 0,
-              note: 'นำเข้าจาก Krungthai / LINE',
+              note: 'นำเข้าจากประวัติแชท Krungthai / LINE',
               isPaid: false,
               updatedAt: now + idx,
               device: deviceProfile.name,
@@ -5533,7 +5598,7 @@ button:active,
               amount: item.amount,
               category: item.category || (item.type === 'income' ? 'inc_salary' : 'exp_bills'),
               title: item.title,
-              note: 'นำเข้าจาก Krungthai / LINE',
+              note: 'นำเข้าจากประวัติแชท Krungthai / LINE',
               date: item.date,
               slipDataUrl: null,
               createdAt: now + idx,
@@ -5550,6 +5615,8 @@ button:active,
         document.getElementById('lineImportModalBackdrop').classList.remove('open');
         document.getElementById('lineImportTextarea').value = '';
         document.getElementById('lineImportPreviewWrap').style.display = 'none';
+        const titleEl = document.getElementById('lineDropZoneTitle');
+        if (titleEl) titleEl.textContent = 'แตะที่นี่เพื่อเลือกไฟล์แชท LINE (.txt)';
         parsedLineItems = [];
         showToast(`บันทึก ${checkedItems.length} รายการจาก LINE เรียบร้อยแล้ว!`, '🎉');
       });
@@ -5561,7 +5628,7 @@ button:active,
   function doParseAndRenderLineText() {
     const rawText = document.getElementById('lineImportTextarea').value || '';
     if (!rawText.trim()) {
-      showToast('กรุณาวางข้อความจาก LINE ก่อนครับ', '⚠️');
+      showToast('กรุณาเลือกไฟล์หรือวางข้อความจาก LINE ก่อนครับ', '⚠️');
       return;
     }
 
@@ -5569,15 +5636,27 @@ button:active,
     const wrap = document.getElementById('lineImportPreviewWrap');
     const countEl = document.getElementById('lineDetectedCount');
     const listEl = document.getElementById('lineParsedList');
+    const incSumEl = document.getElementById('lineTotalIncomeSummary');
+    const expSumEl = document.getElementById('lineTotalExpenseSummary');
 
     if (parsedLineItems.length === 0) {
-      showToast('ไม่พบยอดเงินในข้อความ กรุณาตรวจสอบข้อความที่วางครับ', '⚠️');
+      showToast('ไม่พบรายการยอดเงินในไฟล์ กรุณาตรวจสอบไฟล์ที่เลือกครับ', '⚠️');
       wrap.style.display = 'none';
       return;
     }
 
     countEl.textContent = parsedLineItems.length;
     wrap.style.display = 'block';
+
+    const updateSummaries = () => {
+      const active = parsedLineItems.filter(p => p.checked);
+      const inc = active.filter(p => p.type === 'income').reduce((s, p) => s + p.amount, 0);
+      const exp = active.filter(p => p.type === 'expense').reduce((s, p) => s + p.amount, 0);
+      if (incSumEl) incSumEl.textContent = `รับ: +${formatCurrency(inc)}`;
+      if (expSumEl) expSumEl.textContent = `จ่าย: -${formatCurrency(exp)}`;
+    };
+
+    updateSummaries();
 
     listEl.innerHTML = parsedLineItems.map((item, idx) => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border-color);border-radius:10px;gap:10px;">
@@ -5602,6 +5681,7 @@ button:active,
       chk.addEventListener('change', e => {
         const i = Number(chk.dataset.lineChk);
         if (parsedLineItems[i]) parsedLineItems[i].checked = chk.checked;
+        updateSummaries();
       });
     });
   }
@@ -5619,36 +5699,39 @@ button:active,
     const currentYear = new Date().getFullYear();
     const todayStr = getTodayStr(0);
 
-    let rawBlocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
-    if (rawBlocks.length === 1 && text.includes('\n')) {
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const isLineList = lines.every(l => /\d+/.test(l));
-      if (isLineList) rawBlocks = lines;
-    }
-
+    // If it's a full LINE chat export file, process lines sequentially tracking date headers
+    const rawLines = text.split(/\r?\n/);
     const results = [];
+    let currentDate = todayStr;
+    let currentBlock = [];
 
-    for (const block of rawBlocks) {
+    function processBlock(blockLines, fallbackDate) {
+      if (!blockLines || blockLines.length === 0) return;
+      const blockText = blockLines.join('\n');
+
+      const hasMoney = /(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|บาท|฿|โอนออก|โอนเข้า|ชำระ)/.test(blockText);
+      if (!hasMoney) return;
+
       let type = 'expense';
-      if (/โอนเข้า|เงินเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า/i.test(block)) {
+      if (/โอนเข้า|เงินเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า/i.test(blockText)) {
         type = 'income';
       }
 
       let amount = 0;
-      const ktAmt = block.match(/(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
+      const ktAmt = blockText.match(/(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
       if (ktAmt) {
         amount = parseFloat(ktAmt[1].replace(/,/g, ''));
       } else {
-        const numbers = block.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
+        const numbers = blockText.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
         if (numbers) {
           amount = parseFloat(numbers[numbers.length - 1].replace(/,/g, ''));
         }
       }
 
-      if (!amount || isNaN(amount) || amount <= 0) continue;
+      if (!amount || isNaN(amount) || amount <= 0) return;
 
-      let dateStr = todayStr;
-      const dateMatch = block.match(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*(\d{2,4}))?/);
+      let dateStr = fallbackDate || todayStr;
+      const dateMatch = blockText.match(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*(\d{2,4}))?/);
       if (dateMatch) {
         const d = parseInt(dateMatch[1], 10);
         const m = thaiMonths[dateMatch[2]];
@@ -5662,7 +5745,7 @@ button:active,
         }
         dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       } else {
-        const slashDate = block.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+        const slashDate = blockText.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
         if (slashDate) {
           const d = parseInt(slashDate[1], 10);
           const m = parseInt(slashDate[2], 10);
@@ -5675,9 +5758,9 @@ button:active,
       }
 
       let title = '';
-      const toMatch = block.match(/(?:ไปยัง|โอนให้|ชำระให้|จ่ายให้)\s*([^\n\r]+)/);
-      const fromMatch = block.match(/(?:จาก|รับจาก)\s*([^\n\r]+)/);
-      const billMatch = block.match(/(?:ชำระ|บิล)\s*([^\n\r]+)/);
+      const toMatch = blockText.match(/(?:ไปยัง|โอนให้|ชำระให้|จ่ายให้)\s*([^\n\r]+)/);
+      const fromMatch = blockText.match(/(?:จาก|รับจาก)\s*([^\n\r]+)/);
+      const billMatch = blockText.match(/(?:ชำระ|บิล)\s*([^\n\r]+)/);
 
       if (toMatch) {
         title = `โอนไป ${toMatch[1].trim()}`;
@@ -5686,17 +5769,13 @@ button:active,
       } else if (billMatch) {
         title = billMatch[0].trim();
       } else {
-        let cleaned = block
-          .replace(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*\d{2,4})?/g, '')
-          .replace(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g, '')
-          .replace(/(?:บาท|THB|จำนวนเงิน|จำนวน|ยอดเงิน|เงินโอนออก|เงินโอนเข้า|ชำระเงินสำเร็จ)/g, '')
-          .trim();
-        title = cleaned || (type === 'income' ? 'รับเงินโอน' : 'รายการทั่วไป');
+        const cleanFirstLine = blockLines[0].replace(/^\d{1,2}:\d{2}\s*(?:[^\t]+\t)?/, '').trim();
+        title = cleanFirstLine || (type === 'income' ? 'เงินโอนเข้า' : 'เงินโอนออก');
       }
 
       let category = type === 'income' ? 'inc_salary' : 'exp_bills';
-      if (/อาหาร|ข้าว|ก๋วยเตี๋ยว|ขนม|กาแฟ/i.test(title)) category = 'exp_food';
-      else if (/น้ำมัน|รถ|ทางด่วน/i.test(title)) category = 'exp_transport';
+      if (/อาหาร|ข้าว|ก๋วยเตี๋ยว|ขนม|กาแฟ|7-eleven|food/i.test(title)) category = 'exp_food';
+      else if (/น้ำมัน|รถ|ทางด่วน|ptt|bcp|shell/i.test(title)) category = 'exp_transport';
 
       results.push({
         id: `import-${Date.now()}-${results.length}`,
@@ -5707,6 +5786,48 @@ button:active,
         category,
         checked: true
       });
+    }
+
+    const isLineChatExport = text.includes('[LINE]') || text.includes('ประวัติการแชท') || /^\d{1,2}:\d{2}\t/m.test(text);
+
+    if (isLineChatExport) {
+      for (let i = 0; i < rawLines.length; i++) {
+        const line = rawLines[i].trim();
+        if (!line) continue;
+
+        const dHeader = line.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
+        if (dHeader) {
+          if (currentBlock.length > 0) {
+            processBlock(currentBlock, currentDate);
+            currentBlock = [];
+          }
+          currentDate = `${dHeader[1]}-${String(dHeader[2]).padStart(2, '0')}-${String(dHeader[3]).padStart(2, '0')}`;
+          continue;
+        }
+
+        const isNewMsg = /^\d{1,2}:\d{2}(?:\t|\s{2,})/.test(line);
+        if (isNewMsg) {
+          if (currentBlock.length > 0) {
+            processBlock(currentBlock, currentDate);
+            currentBlock = [];
+          }
+        }
+        currentBlock.push(line);
+      }
+
+      if (currentBlock.length > 0) {
+        processBlock(currentBlock, currentDate);
+      }
+    } else {
+      // Fallback: chunk by double linebreaks or lines
+      let rawBlocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+      if (rawBlocks.length === 1 && text.includes('\n')) {
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.every(l => /\d+/.test(l))) rawBlocks = lines;
+      }
+      for (const block of rawBlocks) {
+        processBlock(block.split('\n'), todayStr);
+      }
     }
 
     return results;

@@ -2871,6 +2871,58 @@
       });
     }
 
+    // LINE Chat File Drag & Drop + File Selection
+    const lineDropZone = document.getElementById('lineFileDropZone');
+    const lineFileInput = document.getElementById('lineChatFileInput');
+
+    if (lineDropZone && lineFileInput) {
+      lineDropZone.addEventListener('click', () => {
+        lineFileInput.click();
+      });
+
+      lineFileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) {
+          handleLineChatFile(e.target.files[0]);
+        }
+      });
+
+      lineDropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        lineDropZone.style.background = '#ECFDF5';
+        lineDropZone.style.borderColor = '#059669';
+      });
+
+      lineDropZone.addEventListener('dragleave', e => {
+        e.preventDefault();
+        lineDropZone.style.background = '#F8FAFC';
+        lineDropZone.style.borderColor = '#06C755';
+      });
+
+      lineDropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        lineDropZone.style.background = '#F8FAFC';
+        lineDropZone.style.borderColor = '#06C755';
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleLineChatFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    function handleLineChatFile(file) {
+      if (!file) return;
+      const titleEl = document.getElementById('lineDropZoneTitle');
+      if (titleEl) titleEl.textContent = `📂 ไฟล์: ${file.name}`;
+
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const text = ev.target.result || '';
+        document.getElementById('lineImportTextarea').value = text;
+        doParseAndRenderLineText();
+        showToast(`อ่านไฟล์ "${file.name}" เรียบร้อยแล้ว!`, '📄');
+      };
+      reader.readAsText(file);
+    }
+
     const btnPasteLine = document.getElementById('btnPasteClipboardLine');
     if (btnPasteLine) {
       btnPasteLine.addEventListener('click', async () => {
@@ -2903,6 +2955,8 @@
       btnClearLine.addEventListener('click', () => {
         document.getElementById('lineImportTextarea').value = '';
         document.getElementById('lineImportPreviewWrap').style.display = 'none';
+        const titleEl = document.getElementById('lineDropZoneTitle');
+        if (titleEl) titleEl.textContent = 'แตะที่นี่เพื่อเลือกไฟล์แชท LINE (.txt)';
         parsedLineItems = [];
       });
     }
@@ -2920,7 +2974,7 @@
         const todayStr = getTodayStr(0);
 
         checkedItems.forEach((item, idx) => {
-          // If date is in the future, save as scheduled expense; otherwise save as transaction
+          // If date is strictly in the future, save as scheduled expense; otherwise save as actual transaction
           if (item.date > todayStr) {
             state.store.scheduledExpenses.push({
               id: `sch-line-${now}-${idx}`,
@@ -2931,7 +2985,7 @@
               recurrence: 'none',
               installmentCurrent: 0,
               installmentTotal: 0,
-              note: 'นำเข้าจาก Krungthai / LINE',
+              note: 'นำเข้าจากประวัติแชท Krungthai / LINE',
               isPaid: false,
               updatedAt: now + idx,
               device: deviceProfile.name,
@@ -2944,7 +2998,7 @@
               amount: item.amount,
               category: item.category || (item.type === 'income' ? 'inc_salary' : 'exp_bills'),
               title: item.title,
-              note: 'นำเข้าจาก Krungthai / LINE',
+              note: 'นำเข้าจากประวัติแชท Krungthai / LINE',
               date: item.date,
               slipDataUrl: null,
               createdAt: now + idx,
@@ -2961,6 +3015,8 @@
         document.getElementById('lineImportModalBackdrop').classList.remove('open');
         document.getElementById('lineImportTextarea').value = '';
         document.getElementById('lineImportPreviewWrap').style.display = 'none';
+        const titleEl = document.getElementById('lineDropZoneTitle');
+        if (titleEl) titleEl.textContent = 'แตะที่นี่เพื่อเลือกไฟล์แชท LINE (.txt)';
         parsedLineItems = [];
         showToast(`บันทึก ${checkedItems.length} รายการจาก LINE เรียบร้อยแล้ว!`, '🎉');
       });
@@ -2972,7 +3028,7 @@
   function doParseAndRenderLineText() {
     const rawText = document.getElementById('lineImportTextarea').value || '';
     if (!rawText.trim()) {
-      showToast('กรุณาวางข้อความจาก LINE ก่อนครับ', '⚠️');
+      showToast('กรุณาเลือกไฟล์หรือวางข้อความจาก LINE ก่อนครับ', '⚠️');
       return;
     }
 
@@ -2980,15 +3036,27 @@
     const wrap = document.getElementById('lineImportPreviewWrap');
     const countEl = document.getElementById('lineDetectedCount');
     const listEl = document.getElementById('lineParsedList');
+    const incSumEl = document.getElementById('lineTotalIncomeSummary');
+    const expSumEl = document.getElementById('lineTotalExpenseSummary');
 
     if (parsedLineItems.length === 0) {
-      showToast('ไม่พบยอดเงินในข้อความ กรุณาตรวจสอบข้อความที่วางครับ', '⚠️');
+      showToast('ไม่พบรายการยอดเงินในไฟล์ กรุณาตรวจสอบไฟล์ที่เลือกครับ', '⚠️');
       wrap.style.display = 'none';
       return;
     }
 
     countEl.textContent = parsedLineItems.length;
     wrap.style.display = 'block';
+
+    const updateSummaries = () => {
+      const active = parsedLineItems.filter(p => p.checked);
+      const inc = active.filter(p => p.type === 'income').reduce((s, p) => s + p.amount, 0);
+      const exp = active.filter(p => p.type === 'expense').reduce((s, p) => s + p.amount, 0);
+      if (incSumEl) incSumEl.textContent = `รับ: +${formatCurrency(inc)}`;
+      if (expSumEl) expSumEl.textContent = `จ่าย: -${formatCurrency(exp)}`;
+    };
+
+    updateSummaries();
 
     listEl.innerHTML = parsedLineItems.map((item, idx) => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border-color);border-radius:10px;gap:10px;">
@@ -3013,6 +3081,7 @@
       chk.addEventListener('change', e => {
         const i = Number(chk.dataset.lineChk);
         if (parsedLineItems[i]) parsedLineItems[i].checked = chk.checked;
+        updateSummaries();
       });
     });
   }
@@ -3030,36 +3099,39 @@
     const currentYear = new Date().getFullYear();
     const todayStr = getTodayStr(0);
 
-    let rawBlocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
-    if (rawBlocks.length === 1 && text.includes('\n')) {
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const isLineList = lines.every(l => /\d+/.test(l));
-      if (isLineList) rawBlocks = lines;
-    }
-
+    // If it's a full LINE chat export file, process lines sequentially tracking date headers
+    const rawLines = text.split(/\r?\n/);
     const results = [];
+    let currentDate = todayStr;
+    let currentBlock = [];
 
-    for (const block of rawBlocks) {
+    function processBlock(blockLines, fallbackDate) {
+      if (!blockLines || blockLines.length === 0) return;
+      const blockText = blockLines.join('\n');
+
+      const hasMoney = /(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|บาท|฿|โอนออก|โอนเข้า|ชำระ)/.test(blockText);
+      if (!hasMoney) return;
+
       let type = 'expense';
-      if (/โอนเข้า|เงินเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า/i.test(block)) {
+      if (/โอนเข้า|เงินเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า/i.test(blockText)) {
         type = 'income';
       }
 
       let amount = 0;
-      const ktAmt = block.match(/(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
+      const ktAmt = blockText.match(/(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
       if (ktAmt) {
         amount = parseFloat(ktAmt[1].replace(/,/g, ''));
       } else {
-        const numbers = block.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
+        const numbers = blockText.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
         if (numbers) {
           amount = parseFloat(numbers[numbers.length - 1].replace(/,/g, ''));
         }
       }
 
-      if (!amount || isNaN(amount) || amount <= 0) continue;
+      if (!amount || isNaN(amount) || amount <= 0) return;
 
-      let dateStr = todayStr;
-      const dateMatch = block.match(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*(\d{2,4}))?/);
+      let dateStr = fallbackDate || todayStr;
+      const dateMatch = blockText.match(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*(\d{2,4}))?/);
       if (dateMatch) {
         const d = parseInt(dateMatch[1], 10);
         const m = thaiMonths[dateMatch[2]];
@@ -3073,7 +3145,7 @@
         }
         dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       } else {
-        const slashDate = block.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+        const slashDate = blockText.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
         if (slashDate) {
           const d = parseInt(slashDate[1], 10);
           const m = parseInt(slashDate[2], 10);
@@ -3086,9 +3158,9 @@
       }
 
       let title = '';
-      const toMatch = block.match(/(?:ไปยัง|โอนให้|ชำระให้|จ่ายให้)\s*([^\n\r]+)/);
-      const fromMatch = block.match(/(?:จาก|รับจาก)\s*([^\n\r]+)/);
-      const billMatch = block.match(/(?:ชำระ|บิล)\s*([^\n\r]+)/);
+      const toMatch = blockText.match(/(?:ไปยัง|โอนให้|ชำระให้|จ่ายให้)\s*([^\n\r]+)/);
+      const fromMatch = blockText.match(/(?:จาก|รับจาก)\s*([^\n\r]+)/);
+      const billMatch = blockText.match(/(?:ชำระ|บิล)\s*([^\n\r]+)/);
 
       if (toMatch) {
         title = `โอนไป ${toMatch[1].trim()}`;
@@ -3097,17 +3169,13 @@
       } else if (billMatch) {
         title = billMatch[0].trim();
       } else {
-        let cleaned = block
-          .replace(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*\d{2,4})?/g, '')
-          .replace(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g, '')
-          .replace(/(?:บาท|THB|จำนวนเงิน|จำนวน|ยอดเงิน|เงินโอนออก|เงินโอนเข้า|ชำระเงินสำเร็จ)/g, '')
-          .trim();
-        title = cleaned || (type === 'income' ? 'รับเงินโอน' : 'รายการทั่วไป');
+        const cleanFirstLine = blockLines[0].replace(/^\d{1,2}:\d{2}\s*(?:[^\t]+\t)?/, '').trim();
+        title = cleanFirstLine || (type === 'income' ? 'เงินโอนเข้า' : 'เงินโอนออก');
       }
 
       let category = type === 'income' ? 'inc_salary' : 'exp_bills';
-      if (/อาหาร|ข้าว|ก๋วยเตี๋ยว|ขนม|กาแฟ/i.test(title)) category = 'exp_food';
-      else if (/น้ำมัน|รถ|ทางด่วน/i.test(title)) category = 'exp_transport';
+      if (/อาหาร|ข้าว|ก๋วยเตี๋ยว|ขนม|กาแฟ|7-eleven|food/i.test(title)) category = 'exp_food';
+      else if (/น้ำมัน|รถ|ทางด่วน|ptt|bcp|shell/i.test(title)) category = 'exp_transport';
 
       results.push({
         id: `import-${Date.now()}-${results.length}`,
@@ -3118,6 +3186,48 @@
         category,
         checked: true
       });
+    }
+
+    const isLineChatExport = text.includes('[LINE]') || text.includes('ประวัติการแชท') || /^\d{1,2}:\d{2}\t/m.test(text);
+
+    if (isLineChatExport) {
+      for (let i = 0; i < rawLines.length; i++) {
+        const line = rawLines[i].trim();
+        if (!line) continue;
+
+        const dHeader = line.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
+        if (dHeader) {
+          if (currentBlock.length > 0) {
+            processBlock(currentBlock, currentDate);
+            currentBlock = [];
+          }
+          currentDate = `${dHeader[1]}-${String(dHeader[2]).padStart(2, '0')}-${String(dHeader[3]).padStart(2, '0')}`;
+          continue;
+        }
+
+        const isNewMsg = /^\d{1,2}:\d{2}(?:\t|\s{2,})/.test(line);
+        if (isNewMsg) {
+          if (currentBlock.length > 0) {
+            processBlock(currentBlock, currentDate);
+            currentBlock = [];
+          }
+        }
+        currentBlock.push(line);
+      }
+
+      if (currentBlock.length > 0) {
+        processBlock(currentBlock, currentDate);
+      }
+    } else {
+      // Fallback: chunk by double linebreaks or lines
+      let rawBlocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+      if (rawBlocks.length === 1 && text.includes('\n')) {
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.every(l => /\d+/.test(l))) rawBlocks = lines;
+      }
+      for (const block of rawBlocks) {
+        processBlock(block.split('\n'), todayStr);
+      }
     }
 
     return results;
