@@ -1632,9 +1632,14 @@ button:active,
               <span>⚡</span>
               <span>บันทึกรายการรับ-จ่ายด่วน</span>
             </div>
-            <button type="button" class="quick-amt-btn" id="btnToggleNumpad" style="flex:0;white-space:nowrap;">
-              🔢 ซ่อน/แสดงแป้นตัวเลข
-            </button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="quick-amt-btn" id="btnOpenLineImportModal" style="flex:0;white-space:nowrap;background:#06C755;color:#FFF;border:none;font-weight:700;box-shadow:0 3px 10px rgba(6,199,85,0.3);">
+                💬 ดึงจาก Krungthai / LINE
+              </button>
+              <button type="button" class="quick-amt-btn" id="btnToggleNumpad" style="flex:0;white-space:nowrap;">
+                🔢 แป้นตัวเลข
+              </button>
+            </div>
           </div>
 
           <div class="panel-body">
@@ -2488,6 +2493,68 @@ button:active,
         </div>
 
         <div class="calendar-heatmap-grid" id="calModalDaysGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       MODAL 5: ดึงข้อมูลจากข้อความ Krungthai Connext / LINE (1-Click Smart Import)
+       ================================================================= -->
+  <div class="modal-backdrop" id="lineImportModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:540px;">
+      <div class="modal-header" style="background:#06C755;">
+        <div style="font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;">
+          <span>💬</span>
+          <span>ดึงข้อมูลจาก Krungthai Connext & LINE</span>
+        </div>
+        <button type="button" id="btnCloseLineImportModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:0.82rem;color:#166534;line-height:1.5;">
+          <strong>📱 วิธีใช้งานง่ายๆ ใน 2 ขั้นตอน:</strong><br/>
+          1. ในแอป LINE เปิดแชท <strong>Krungthai Connext</strong> ➔ <strong>กดค้างที่ข้อความแจ้งเตือน</strong> ➔ แตะ <strong>"คัดลอก" (Copy)</strong> (จะเลือกหลายๆ ข้อความก็ได้)<br/>
+          2. สลับมาที่นี่ กดปุ่มสีเขียว <strong>"📋 วางข้อความที่ก็อปมา"</strong> ด้านล่างนี้ได้เลย ระบบจะแกะยอดเงิน วันที่ และรายการให้ทันที!
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label class="form-label">กล่องข้อความจาก LINE / Krungthai Connext:</label>
+            <button type="button" class="quick-amt-btn" id="btnPasteClipboardLine" style="background:#06C755;color:#FFF;border:none;font-weight:700;padding:5px 12px;font-size:0.78rem;">
+              📋 แตะเพื่อวางข้อความที่ก็อปมา
+            </button>
+          </div>
+          <textarea id="lineImportTextarea" class="text-input" style="height:110px;font-size:0.86rem;resize:vertical;" placeholder="วางข้อความที่คัดลอกมาจาก Krungthai Connext เช่น
+เงินโอนออก
+จำนวนเงิน 200.00 บาท
+วันที่ 23 พ.ย. 69
+ไปยัง ค่าเน็ต
+
+หรือข้อความจดหลายบรรทัด เช่น:
+23 พย ค่าเน็ต 200
+1 ธค Google AI pro 279"></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button type="button" class="btn-submit" id="btnParseLineText" style="background:#0F172A;color:#FFF;padding:10px;font-size:0.9rem;">
+            🔍 สแกนและถอดรหัสรายการ
+          </button>
+          <button type="button" class="quick-amt-btn" id="btnClearLineText" style="flex:0;white-space:nowrap;padding:0 14px;">
+            ล้าง
+          </button>
+        </div>
+
+        <!-- Parsed Results Container -->
+        <div id="lineImportPreviewWrap" style="display:none;">
+          <div style="font-weight:800;font-size:0.9rem;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>รายการที่ระบบตรวจพบ (<span id="lineDetectedCount">0</span> รายการ):</span>
+            <span style="font-size:0.75rem;color:var(--text-secondary);">ตรวจทานก่อนบันทึก</span>
+          </div>
+          <div id="lineParsedList" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+          <button type="button" class="btn-submit scheduled" id="btnConfirmSaveLineItems" style="font-size:0.95rem;padding:12px;">
+            💾 ยืนยันบันทึกทุกรายการเข้าแอปทันที
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -5377,6 +5444,272 @@ button:active,
         syncWithWifiServer(false, false);
       }
     });
+
+    // Krungthai Connext & LINE Smart Import Event Handlers
+    const btnOpenLineModal = document.getElementById('btnOpenLineImportModal');
+    if (btnOpenLineModal) {
+      btnOpenLineModal.addEventListener('click', () => {
+        document.getElementById('lineImportModalBackdrop').classList.add('open');
+      });
+    }
+
+    const btnCloseLineModal = document.getElementById('btnCloseLineImportModal');
+    if (btnCloseLineModal) {
+      btnCloseLineModal.addEventListener('click', () => {
+        document.getElementById('lineImportModalBackdrop').classList.remove('open');
+      });
+    }
+
+    const btnPasteLine = document.getElementById('btnPasteClipboardLine');
+    if (btnPasteLine) {
+      btnPasteLine.addEventListener('click', async () => {
+        const textarea = document.getElementById('lineImportTextarea');
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const clipText = await navigator.clipboard.readText();
+            if (clipText && clipText.trim()) {
+              textarea.value = clipText.trim();
+              doParseAndRenderLineText();
+              showToast('วางข้อความจากคลิปบอร์ดเรียบร้อยแล้ว!', '📋');
+              return;
+            }
+          }
+        } catch (e) {}
+        textarea.focus();
+        showToast('แตะค้างในช่องข้อความแล้วกด "วาง" (Paste) ได้เลยครับ', '👆');
+      });
+    }
+
+    const btnParseLine = document.getElementById('btnParseLineText');
+    if (btnParseLine) {
+      btnParseLine.addEventListener('click', () => {
+        doParseAndRenderLineText();
+      });
+    }
+
+    const btnClearLine = document.getElementById('btnClearLineText');
+    if (btnClearLine) {
+      btnClearLine.addEventListener('click', () => {
+        document.getElementById('lineImportTextarea').value = '';
+        document.getElementById('lineImportPreviewWrap').style.display = 'none';
+        parsedLineItems = [];
+      });
+    }
+
+    const btnConfirmLine = document.getElementById('btnConfirmSaveLineItems');
+    if (btnConfirmLine) {
+      btnConfirmLine.addEventListener('click', () => {
+        const checkedItems = parsedLineItems.filter(item => item.checked);
+        if (checkedItems.length === 0) {
+          showToast('กรุณาเลือกอย่างน้อย 1 รายการเพื่อบันทึกครับ', '⚠️');
+          return;
+        }
+
+        const now = Date.now();
+        const todayStr = getTodayStr(0);
+
+        checkedItems.forEach((item, idx) => {
+          // If date is in the future, save as scheduled expense; otherwise save as transaction
+          if (item.date > todayStr) {
+            state.store.scheduledExpenses.push({
+              id: `sch-line-${now}-${idx}`,
+              title: item.title,
+              amount: item.amount,
+              category: item.category || 'exp_bills',
+              dueDate: item.date,
+              recurrence: 'none',
+              installmentCurrent: 0,
+              installmentTotal: 0,
+              note: 'นำเข้าจาก Krungthai / LINE',
+              isPaid: false,
+              updatedAt: now + idx,
+              device: deviceProfile.name,
+              deleted: false
+            });
+          } else {
+            state.store.transactions.push({
+              id: `tx-line-${now}-${idx}`,
+              type: item.type,
+              amount: item.amount,
+              category: item.category || (item.type === 'income' ? 'inc_salary' : 'exp_bills'),
+              title: item.title,
+              note: 'นำเข้าจาก Krungthai / LINE',
+              date: item.date,
+              slipDataUrl: null,
+              createdAt: now + idx,
+              updatedAt: now + idx,
+              device: deviceProfile.name,
+              deleted: false
+            });
+          }
+        });
+
+        saveLocalStore();
+        syncWithWifiServer(false);
+        renderAll();
+        document.getElementById('lineImportModalBackdrop').classList.remove('open');
+        document.getElementById('lineImportTextarea').value = '';
+        document.getElementById('lineImportPreviewWrap').style.display = 'none';
+        parsedLineItems = [];
+        showToast(`บันทึก ${checkedItems.length} รายการจาก LINE เรียบร้อยแล้ว!`, '🎉');
+      });
+    }
+  }
+
+  let parsedLineItems = [];
+
+  function doParseAndRenderLineText() {
+    const rawText = document.getElementById('lineImportTextarea').value || '';
+    if (!rawText.trim()) {
+      showToast('กรุณาวางข้อความจาก LINE ก่อนครับ', '⚠️');
+      return;
+    }
+
+    parsedLineItems = parseLineOrBankText(rawText);
+    const wrap = document.getElementById('lineImportPreviewWrap');
+    const countEl = document.getElementById('lineDetectedCount');
+    const listEl = document.getElementById('lineParsedList');
+
+    if (parsedLineItems.length === 0) {
+      showToast('ไม่พบยอดเงินในข้อความ กรุณาตรวจสอบข้อความที่วางครับ', '⚠️');
+      wrap.style.display = 'none';
+      return;
+    }
+
+    countEl.textContent = parsedLineItems.length;
+    wrap.style.display = 'block';
+
+    listEl.innerHTML = parsedLineItems.map((item, idx) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border-color);border-radius:10px;gap:10px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;min-width:0;">
+          <input type="checkbox" data-line-chk="${idx}" ${item.checked ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;" />
+          <div style="min-width:0;">
+            <div style="font-weight:700;font-size:0.88rem;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${escapeHtml(item.title)}
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);">
+              📅 ${formatThaiDate(item.date, false)} • <span style="font-weight:700;color:${item.type === 'income' ? 'var(--income-color)' : 'var(--expense-color)'};">${item.type === 'income' ? '📈 รายรับ' : '📉 รายจ่าย'}</span>
+            </div>
+          </div>
+        </label>
+        <div style="font-weight:800;font-size:1rem;color:${item.type === 'income' ? 'var(--income-color)' : 'var(--expense-color)'};white-space:nowrap;">
+          ${item.type === 'income' ? '+' : '-'}${formatCurrency(item.amount)}
+        </div>
+      </div>
+    `).join('');
+
+    listEl.querySelectorAll('[data-line-chk]').forEach(chk => {
+      chk.addEventListener('change', e => {
+        const i = Number(chk.dataset.lineChk);
+        if (parsedLineItems[i]) parsedLineItems[i].checked = chk.checked;
+      });
+    });
+  }
+
+  function parseLineOrBankText(text) {
+    if (!text || !text.trim()) return [];
+
+    const thaiMonths = {
+      'ม.ค.': 1, 'มค': 1, 'ก.พ.': 2, 'กพ': 2, 'มี.ค.': 3, 'มีค': 3,
+      'เม.ย.': 4, 'เมย': 4, 'พ.ค.': 5, 'พค': 5, 'มิ.ย.': 6, 'มิย': 6,
+      'ก.ค.': 7, 'กค': 7, 'ส.ค.': 8, 'สค': 8, 'ก.ย.': 9, 'กย': 9,
+      'ต.ค.': 10, 'ตค': 10, 'พ.ย.': 11, 'พย': 11, 'ธ.ค.': 12, 'ธค': 12
+    };
+
+    const currentYear = new Date().getFullYear();
+    const todayStr = getTodayStr(0);
+
+    let rawBlocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+    if (rawBlocks.length === 1 && text.includes('\n')) {
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const isLineList = lines.every(l => /\d+/.test(l));
+      if (isLineList) rawBlocks = lines;
+    }
+
+    const results = [];
+
+    for (const block of rawBlocks) {
+      let type = 'expense';
+      if (/โอนเข้า|เงินเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า/i.test(block)) {
+        type = 'income';
+      }
+
+      let amount = 0;
+      const ktAmt = block.match(/(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
+      if (ktAmt) {
+        amount = parseFloat(ktAmt[1].replace(/,/g, ''));
+      } else {
+        const numbers = block.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
+        if (numbers) {
+          amount = parseFloat(numbers[numbers.length - 1].replace(/,/g, ''));
+        }
+      }
+
+      if (!amount || isNaN(amount) || amount <= 0) continue;
+
+      let dateStr = todayStr;
+      const dateMatch = block.match(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*(\d{2,4}))?/);
+      if (dateMatch) {
+        const d = parseInt(dateMatch[1], 10);
+        const m = thaiMonths[dateMatch[2]];
+        let y = currentYear;
+        if (dateMatch[3]) {
+          let yr = parseInt(dateMatch[3], 10);
+          if (yr > 2500) yr -= 543;
+          else if (yr >= 50 && yr <= 99) yr = (2500 + yr) - 543;
+          else if (yr < 50) yr += 2000;
+          y = yr;
+        }
+        dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      } else {
+        const slashDate = block.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+        if (slashDate) {
+          const d = parseInt(slashDate[1], 10);
+          const m = parseInt(slashDate[2], 10);
+          let yr = parseInt(slashDate[3], 10);
+          if (yr > 2500) yr -= 543;
+          else if (yr >= 50 && yr <= 99) yr = (2500 + yr) - 543;
+          else if (yr < 50) yr += 2000;
+          dateStr = `${yr}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        }
+      }
+
+      let title = '';
+      const toMatch = block.match(/(?:ไปยัง|โอนให้|ชำระให้|จ่ายให้)\s*([^\n\r]+)/);
+      const fromMatch = block.match(/(?:จาก|รับจาก)\s*([^\n\r]+)/);
+      const billMatch = block.match(/(?:ชำระ|บิล)\s*([^\n\r]+)/);
+
+      if (toMatch) {
+        title = `โอนไป ${toMatch[1].trim()}`;
+      } else if (fromMatch && type === 'income') {
+        title = `รับจาก ${fromMatch[1].trim()}`;
+      } else if (billMatch) {
+        title = billMatch[0].trim();
+      } else {
+        let cleaned = block
+          .replace(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*\d{2,4})?/g, '')
+          .replace(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g, '')
+          .replace(/(?:บาท|THB|จำนวนเงิน|จำนวน|ยอดเงิน|เงินโอนออก|เงินโอนเข้า|ชำระเงินสำเร็จ)/g, '')
+          .trim();
+        title = cleaned || (type === 'income' ? 'รับเงินโอน' : 'รายการทั่วไป');
+      }
+
+      let category = type === 'income' ? 'inc_salary' : 'exp_bills';
+      if (/อาหาร|ข้าว|ก๋วยเตี๋ยว|ขนม|กาแฟ/i.test(title)) category = 'exp_food';
+      else if (/น้ำมัน|รถ|ทางด่วน/i.test(title)) category = 'exp_transport';
+
+      results.push({
+        id: `import-${Date.now()}-${results.length}`,
+        type,
+        amount,
+        date: dateStr,
+        title,
+        category,
+        checked: true
+      });
+    }
+
+    return results;
   }
 
   function shiftSelectedDate(deltaDays) {

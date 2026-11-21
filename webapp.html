@@ -100,9 +100,14 @@
               <span>⚡</span>
               <span>บันทึกรายการรับ-จ่ายด่วน</span>
             </div>
-            <button type="button" class="quick-amt-btn" id="btnToggleNumpad" style="flex:0;white-space:nowrap;">
-              🔢 ซ่อน/แสดงแป้นตัวเลข
-            </button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="quick-amt-btn" id="btnOpenLineImportModal" style="flex:0;white-space:nowrap;background:#06C755;color:#FFF;border:none;font-weight:700;box-shadow:0 3px 10px rgba(6,199,85,0.3);">
+                💬 ดึงจาก Krungthai / LINE
+              </button>
+              <button type="button" class="quick-amt-btn" id="btnToggleNumpad" style="flex:0;white-space:nowrap;">
+                🔢 แป้นตัวเลข
+              </button>
+            </div>
           </div>
 
           <div class="panel-body">
@@ -956,6 +961,68 @@
         </div>
 
         <div class="calendar-heatmap-grid" id="calModalDaysGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       MODAL 5: ดึงข้อมูลจากข้อความ Krungthai Connext / LINE (1-Click Smart Import)
+       ================================================================= -->
+  <div class="modal-backdrop" id="lineImportModalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:540px;">
+      <div class="modal-header" style="background:#06C755;">
+        <div style="font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;">
+          <span>💬</span>
+          <span>ดึงข้อมูลจาก Krungthai Connext & LINE</span>
+        </div>
+        <button type="button" id="btnCloseLineImportModal" style="background:transparent;border:none;color:#FFF;font-size:1.3rem;cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:0.82rem;color:#166534;line-height:1.5;">
+          <strong>📱 วิธีใช้งานง่ายๆ ใน 2 ขั้นตอน:</strong><br/>
+          1. ในแอป LINE เปิดแชท <strong>Krungthai Connext</strong> ➔ <strong>กดค้างที่ข้อความแจ้งเตือน</strong> ➔ แตะ <strong>"คัดลอก" (Copy)</strong> (จะเลือกหลายๆ ข้อความก็ได้)<br/>
+          2. สลับมาที่นี่ กดปุ่มสีเขียว <strong>"📋 วางข้อความที่ก็อปมา"</strong> ด้านล่างนี้ได้เลย ระบบจะแกะยอดเงิน วันที่ และรายการให้ทันที!
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label class="form-label">กล่องข้อความจาก LINE / Krungthai Connext:</label>
+            <button type="button" class="quick-amt-btn" id="btnPasteClipboardLine" style="background:#06C755;color:#FFF;border:none;font-weight:700;padding:5px 12px;font-size:0.78rem;">
+              📋 แตะเพื่อวางข้อความที่ก็อปมา
+            </button>
+          </div>
+          <textarea id="lineImportTextarea" class="text-input" style="height:110px;font-size:0.86rem;resize:vertical;" placeholder="วางข้อความที่คัดลอกมาจาก Krungthai Connext เช่น
+เงินโอนออก
+จำนวนเงิน 200.00 บาท
+วันที่ 23 พ.ย. 69
+ไปยัง ค่าเน็ต
+
+หรือข้อความจดหลายบรรทัด เช่น:
+23 พย ค่าเน็ต 200
+1 ธค Google AI pro 279"></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button type="button" class="btn-submit" id="btnParseLineText" style="background:#0F172A;color:#FFF;padding:10px;font-size:0.9rem;">
+            🔍 สแกนและถอดรหัสรายการ
+          </button>
+          <button type="button" class="quick-amt-btn" id="btnClearLineText" style="flex:0;white-space:nowrap;padding:0 14px;">
+            ล้าง
+          </button>
+        </div>
+
+        <!-- Parsed Results Container -->
+        <div id="lineImportPreviewWrap" style="display:none;">
+          <div style="font-weight:800;font-size:0.9rem;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>รายการที่ระบบตรวจพบ (<span id="lineDetectedCount">0</span> รายการ):</span>
+            <span style="font-size:0.75rem;color:var(--text-secondary);">ตรวจทานก่อนบันทึก</span>
+          </div>
+          <div id="lineParsedList" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+          <button type="button" class="btn-submit scheduled" id="btnConfirmSaveLineItems" style="font-size:0.95rem;padding:12px;">
+            💾 ยืนยันบันทึกทุกรายการเข้าแอปทันที
+          </button>
+        </div>
       </div>
     </div>
   </div>
