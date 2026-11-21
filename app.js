@@ -2959,6 +2959,27 @@
       });
     }
 
+    // Strict Krungthai Type Filter (income_only default per user request)
+    document.querySelectorAll('[data-line-type-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-line-type-filter]').forEach(b => {
+          b.style.background = '';
+          b.style.color = '';
+          b.style.borderColor = '';
+          b.style.fontWeight = '';
+        });
+        btn.style.background = '#059669';
+        btn.style.color = '#FFF';
+        btn.style.borderColor = '#059669';
+        btn.style.fontWeight = '700';
+
+        lineImportTypeFilter = btn.dataset.lineTypeFilter || 'income_only';
+        if ((document.getElementById('lineImportTextarea').value || '').trim()) {
+          doParseAndRenderLineText();
+        }
+      });
+    });
+
     // Date Range Filter Controls inside LINE Import Modal
     const btnOpenLineStart = document.getElementById('btnOpenLineStartCal');
     if (btnOpenLineStart) btnOpenLineStart.addEventListener('click', () => openCustomCalendarModal('lineStart'));
@@ -3109,6 +3130,7 @@
   }
 
   let parsedLineItems = [];
+  let lineImportTypeFilter = 'income_only';
 
   function isDuplicateLineItem(item, seenInBatch) {
     // 1. Check within the same uploaded file
@@ -3258,13 +3280,15 @@
       if (!blockLines || blockLines.length === 0) return;
       const blockText = blockLines.join('\n');
 
-      const hasMoney = /(?:เงินเข้า|เงินออก|จำนวนเงิน|จำนวน|ยอดเงิน|ยอดเงินที่ใช้ได้|ยอด|บาท|฿|โอนออก|โอนเข้า|ชำระ|ถอนเงิน|จ่ายเงิน)/.test(blockText);
-      if (!hasMoney) return;
+      // Strictly filter by Krungthai "เงินเข้า" / "เงินออก" per user filter mode; ignore all other chat messages
+      const hasMoneyIn = /เงินเข้า\s*[:：]?/i.test(blockText);
+      const hasMoneyOut = /เงินออก\s*[:：]?/i.test(blockText);
 
-      let type = 'expense';
-      if (/เงินเข้า|โอนเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า|รับโอน/i.test(blockText)) {
-        type = 'income';
-      }
+      if (lineImportTypeFilter === 'income_only' && !hasMoneyIn) return;
+      if (lineImportTypeFilter === 'expense_only' && !hasMoneyOut) return;
+      if (lineImportTypeFilter === 'both' && !hasMoneyIn && !hasMoneyOut) return;
+
+      const type = hasMoneyIn ? 'income' : 'expense';
 
       // 1. Separate available balance ("ยอดเงินที่ใช้ได้ X,XXX.XX บาท") FIRST so it never collides with transaction amount
       let balanceAfter = null;
