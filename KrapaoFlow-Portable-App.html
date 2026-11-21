@@ -1549,7 +1549,7 @@ button:active,
         <div>
           <div class="brand-title">
             KrapaoFlow
-            <span class="brand-badge">v11 • Krungthai Smart Filter</span>
+            <span class="brand-badge">v12 • Krungthai Smart Filter</span>
           </div>
           <div style="font-size:0.75rem;color:#94A3B8;">
             ทำงานแยกอิสระเข้าจากที่ไหนก็ได้ (iPad / MacBook) • ซิงค์ข้อมูลล่าสุดอัตโนมัติเมื่อต่อ Wi-Fi เดียวกัน
@@ -3061,7 +3061,20 @@ button:active,
   function mergeIncomingStore(serverStore, forceReplace = false) {
     if (!serverStore) return;
 
-    if (forceReplace || (serverStore.resetEpoch && Number(serverStore.resetEpoch) > Number(state.store.resetEpoch || 0) && serverStore.transactions.length === 0)) {
+    const incomingReset = Number(serverStore.resetEpoch || 0);
+    const localReset = Number(state.store.resetEpoch || 0);
+
+    if (incomingReset > localReset) {
+      // Only remove items created/updated BEFORE the reset; preserve any newer items
+      state.store.transactions = (state.store.transactions || []).filter(
+        t => Number(t.updatedAt || t.createdAt || 0) > incomingReset
+      );
+      state.store.scheduledExpenses = (state.store.scheduledExpenses || []).filter(
+        s => Number(s.updatedAt || 0) > incomingReset
+      );
+      state.store.resetEpoch = incomingReset;
+      saveLocalStore();
+    } else if (forceReplace && incomingReset === localReset && (state.store.transactions || []).length === 0) {
       state.store = JSON.parse(JSON.stringify(serverStore));
       saveLocalStore();
       return;
@@ -3216,7 +3229,7 @@ button:active,
             if (outer && outer.event === 'message' && outer.message) {
               const payload = JSON.parse(outer.message);
               if (payload && payload.store) {
-                mergeIncomingStore(payload.store, payload.type === 'HARD_RESET');
+                mergeIncomingStore(payload.store, false);
                 if (payload.originPeerId) {
                   p2pPeersMap.set(payload.originPeerId, {
                     peerId: payload.originPeerId,

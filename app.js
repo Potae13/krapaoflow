@@ -419,7 +419,20 @@
   function mergeIncomingStore(serverStore, forceReplace = false) {
     if (!serverStore) return;
 
-    if (forceReplace || (serverStore.resetEpoch && Number(serverStore.resetEpoch) > Number(state.store.resetEpoch || 0) && serverStore.transactions.length === 0)) {
+    const incomingReset = Number(serverStore.resetEpoch || 0);
+    const localReset = Number(state.store.resetEpoch || 0);
+
+    if (incomingReset > localReset) {
+      // Only remove items created/updated BEFORE the reset; preserve any newer items
+      state.store.transactions = (state.store.transactions || []).filter(
+        t => Number(t.updatedAt || t.createdAt || 0) > incomingReset
+      );
+      state.store.scheduledExpenses = (state.store.scheduledExpenses || []).filter(
+        s => Number(s.updatedAt || 0) > incomingReset
+      );
+      state.store.resetEpoch = incomingReset;
+      saveLocalStore();
+    } else if (forceReplace && incomingReset === localReset && (state.store.transactions || []).length === 0) {
       state.store = JSON.parse(JSON.stringify(serverStore));
       saveLocalStore();
       return;
@@ -574,7 +587,7 @@
             if (outer && outer.event === 'message' && outer.message) {
               const payload = JSON.parse(outer.message);
               if (payload && payload.store) {
-                mergeIncomingStore(payload.store, payload.type === 'HARD_RESET');
+                mergeIncomingStore(payload.store, false);
                 if (payload.originPeerId) {
                   p2pPeersMap.set(payload.originPeerId, {
                     peerId: payload.originPeerId,
