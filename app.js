@@ -3288,17 +3288,20 @@
       }
       const textWithoutBalance = blockText.replace(/ยอดเงินที่ใช้ได้\s*[:：]?\s*[0-9,]+(?:\.[0-9]{1,2})?\s*(?:บาท)?/g, '');
 
-      // 2. STRICTLY match ONLY real Krungthai "เงินเข้า: X บาท" or "เงินออก: X บาท" alerts (ignore all promos, ads, OTPs, etc.)
-      const strictKtMatch = textWithoutBalance.match(/(เงินเข้า|เงินออก)\s*[:：]?\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*บาท/);
-      if (!strictKtMatch) return;
+      // 2. STRICTLY match ONLY real Krungthai bank transaction alerts (must have ยอดเงินที่ใช้ได้ / เข้าบัญชี / จากบัญชี / เมื่อ DD/MM/YY)
+      const isRealBankAlert = /ยอดเงินที่ใช้ได้|เข้าบัญชี\s*[Xx\d\-]+|จากบัญชี\s*[Xx\d\-]+|เมื่อ\s*\d{1,2}\/\d{1,2}\/\d{2}/.test(blockText);
+      if (!isRealBankAlert) return;
 
-      const keyword = strictKtMatch[1];
-      const type = keyword === 'เงินเข้า' ? 'income' : 'expense';
+      const amtMatch = textWithoutBalance.match(/([0-9,]+(?:\.[0-9]{1,2})?)\s*บาท/);
+      if (!amtMatch) return;
+
+      const isIncomeKw = /(?:เงินเข้า|โอนเข้า|รับโอน|เงินฝาก|รับเงิน|เข้าบัญชี)/i.test(textWithoutBalance);
+      const type = isIncomeKw ? 'income' : 'expense';
 
       if (lineImportTypeFilter === 'income_only' && type !== 'income') return;
       if (lineImportTypeFilter === 'expense_only' && type !== 'expense') return;
 
-      const amount = parseFloat(strictKtMatch[2].replace(/,/g, ''));
+      const amount = parseFloat(amtMatch[1].replace(/,/g, ''));
       if (!amount || isNaN(amount) || amount <= 0) return;
 
       // 3. Extract date & time
