@@ -3280,16 +3280,6 @@
       if (!blockLines || blockLines.length === 0) return;
       const blockText = blockLines.join('\n');
 
-      // Strictly filter by Krungthai "เงินเข้า" / "เงินออก" per user filter mode; ignore all other chat messages
-      const hasMoneyIn = /เงินเข้า\s*[:：]?/i.test(blockText);
-      const hasMoneyOut = /เงินออก\s*[:：]?/i.test(blockText);
-
-      if (lineImportTypeFilter === 'income_only' && !hasMoneyIn) return;
-      if (lineImportTypeFilter === 'expense_only' && !hasMoneyOut) return;
-      if (lineImportTypeFilter === 'both' && !hasMoneyIn && !hasMoneyOut) return;
-
-      const type = hasMoneyIn ? 'income' : 'expense';
-
       // 1. Separate available balance ("ยอดเงินที่ใช้ได้ X,XXX.XX บาท") FIRST so it never collides with transaction amount
       let balanceAfter = null;
       const balMatch = blockText.match(/ยอดเงินที่ใช้ได้\s*[:：]?\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
@@ -3298,23 +3288,17 @@
       }
       const textWithoutBalance = blockText.replace(/ยอดเงินที่ใช้ได้\s*[:：]?\s*[0-9,]+(?:\.[0-9]{1,2})?\s*(?:บาท)?/g, '');
 
-      // 2. Extract transaction amount
-      let amount = 0;
-      const ktAmt = textWithoutBalance.match(/(?:เงินเข้า|เงินออก|โอนออก|โอนเข้า|โอนเงิน|ชำระเงิน|ถอนเงิน|จ่ายเงิน|จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*[:：]?\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
-      if (ktAmt) {
-        amount = parseFloat(ktAmt[1].replace(/,/g, ''));
-      } else {
-        const bahtMatch = textWithoutBalance.match(/([0-9,]+(?:\.[0-9]{1,2})?)\s*บาท/);
-        if (bahtMatch) {
-          amount = parseFloat(bahtMatch[1].replace(/,/g, ''));
-        } else {
-          const numbers = textWithoutBalance.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
-          if (numbers) {
-            amount = parseFloat(numbers[numbers.length - 1].replace(/,/g, ''));
-          }
-        }
-      }
+      // 2. STRICTLY match ONLY real Krungthai "เงินเข้า: X บาท" or "เงินออก: X บาท" alerts (ignore all promos, ads, OTPs, etc.)
+      const strictKtMatch = textWithoutBalance.match(/(เงินเข้า|เงินออก)\s*[:：]?\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*บาท/);
+      if (!strictKtMatch) return;
 
+      const keyword = strictKtMatch[1];
+      const type = keyword === 'เงินเข้า' ? 'income' : 'expense';
+
+      if (lineImportTypeFilter === 'income_only' && type !== 'income') return;
+      if (lineImportTypeFilter === 'expense_only' && type !== 'expense') return;
+
+      const amount = parseFloat(strictKtMatch[2].replace(/,/g, ''));
       if (!amount || isNaN(amount) || amount <= 0) return;
 
       // 3. Extract date & time
