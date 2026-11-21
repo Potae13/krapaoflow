@@ -940,7 +940,7 @@
   <!-- =================================================================
        MODAL 4: ปฏิทินเลือกวันที่แบบ Pure HTML (100% รองรับ iPad แนวตั้ง ไม่ใช้ UIKit DatePicker)
        ================================================================= -->
-  <div class="modal-backdrop" id="customCalendarModalBackdrop" role="dialog" aria-modal="true">
+  <div class="modal-backdrop" id="customCalendarModalBackdrop" role="dialog" aria-modal="true" style="z-index:280;">
     <div class="modal-card" style="max-width:420px;">
       <div class="modal-header">
         <div style="font-weight:800;font-size:1rem;">📅 เลือกวันที่</div>
@@ -993,6 +993,30 @@
           </div>
           <div style="font-size:0.78rem;color:#64748B;">
             หรือลากไฟล์ .txt ที่ได้จาก LINE มาวางตรงนี้ (ดึงได้หมดทั้ง 20-100 รายการ)
+          </div>
+        </div>
+
+        <!-- Date Range Filter (100% Pure HTML - Zero UIKit DatePicker) -->
+        <div style="background:#F8FAFC;border:1px solid var(--border-color);border-radius:12px;padding:10px 12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <span style="font-weight:800;font-size:0.82rem;color:var(--text-main);">📅 เลือกช่วงวันที่ต้องการดึง:</span>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button type="button" class="quick-tag" data-line-range="all" style="background:#0F172A;color:#FFF;border-color:#0F172A;">ทั้งหมด</button>
+              <button type="button" class="quick-tag" data-line-range="today">วันนี้</button>
+              <button type="button" class="quick-tag" data-line-range="7d">7 วันล่าสุด</button>
+              <button type="button" class="quick-tag" data-line-range="month">เดือนนี้</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;">
+            <input type="hidden" id="lineFilterStartInput" />
+            <button type="button" class="text-input" id="btnOpenLineStartCal" style="padding:7px 10px;font-size:0.8rem;font-weight:700;text-align:left;cursor:pointer;">
+              <span id="lineFilterStartText">ตั้งแต่: ทั้งหมด</span>
+            </button>
+            <span style="font-size:0.8rem;color:var(--text-secondary);font-weight:700;">ถึง</span>
+            <input type="hidden" id="lineFilterEndInput" />
+            <button type="button" class="text-input" id="btnOpenLineEndCal" style="padding:7px 10px;font-size:0.8rem;font-weight:700;text-align:left;cursor:pointer;">
+              <span id="lineFilterEndText">ถึง: ทั้งหมด</span>
+            </button>
           </div>
         </div>
 

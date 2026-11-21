@@ -1963,6 +1963,8 @@
     if (ctx === 'target') return (state.store.settings && state.store.settings.targetDate) || getTodayStr(15);
     if (ctx === 'scheduled') return document.getElementById('schDueDateInput').value || getTodayStr(7);
     if (ctx === 'editTx') return document.getElementById('editTxDateInput').value || state.selectedDate;
+    if (ctx === 'lineStart') return document.getElementById('lineFilterStartInput').value || getTodayStr(-7);
+    if (ctx === 'lineEnd') return document.getElementById('lineFilterEndInput').value || getTodayStr(0);
     return state.selectedDate;
   }
 
@@ -2032,6 +2034,20 @@
       document.getElementById('editTxDateInput').value = dateStr;
       const editDateBtn = document.getElementById('btnOpenEditTxCalendar');
       if (editDateBtn) editDateBtn.textContent = '📅 ' + formatThaiDate(dateStr, true);
+    } else if (ctx === 'lineStart') {
+      document.getElementById('lineFilterStartInput').value = dateStr;
+      const el = document.getElementById('lineFilterStartText');
+      if (el) el.textContent = 'ตั้งแต่: ' + formatThaiDate(dateStr, false);
+      if ((document.getElementById('lineImportTextarea').value || '').trim()) {
+        doParseAndRenderLineText();
+      }
+    } else if (ctx === 'lineEnd') {
+      document.getElementById('lineFilterEndInput').value = dateStr;
+      const el = document.getElementById('lineFilterEndText');
+      if (el) el.textContent = 'ถึง: ' + formatThaiDate(dateStr, false);
+      if ((document.getElementById('lineImportTextarea').value || '').trim()) {
+        doParseAndRenderLineText();
+      }
     }
     document.getElementById('customCalendarModalBackdrop').classList.remove('open');
     renderAll();
@@ -2943,6 +2959,63 @@
       });
     }
 
+    // Date Range Filter Controls inside LINE Import Modal
+    const btnOpenLineStart = document.getElementById('btnOpenLineStartCal');
+    if (btnOpenLineStart) btnOpenLineStart.addEventListener('click', () => openCustomCalendarModal('lineStart'));
+
+    const btnOpenLineEnd = document.getElementById('btnOpenLineEndCal');
+    if (btnOpenLineEnd) btnOpenLineEnd.addEventListener('click', () => openCustomCalendarModal('lineEnd'));
+
+    document.querySelectorAll('[data-line-range]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-line-range]').forEach(b => {
+          b.style.background = '';
+          b.style.color = '';
+          b.style.borderColor = '';
+        });
+        btn.style.background = '#0F172A';
+        btn.style.color = '#FFF';
+        btn.style.borderColor = '#0F172A';
+
+        const mode = btn.dataset.lineRange;
+        const startIn = document.getElementById('lineFilterStartInput');
+        const endIn = document.getElementById('lineFilterEndInput');
+        const startTxt = document.getElementById('lineFilterStartText');
+        const endTxt = document.getElementById('lineFilterEndText');
+
+        if (mode === 'all') {
+          startIn.value = '';
+          endIn.value = '';
+          if (startTxt) startTxt.textContent = 'ตั้งแต่: ทั้งหมด';
+          if (endTxt) endTxt.textContent = 'ถึง: ทั้งหมด';
+        } else if (mode === 'today') {
+          const t = getTodayStr(0);
+          startIn.value = t;
+          endIn.value = t;
+          if (startTxt) startTxt.textContent = 'ตั้งแต่: ' + formatThaiDate(t, false);
+          if (endTxt) endTxt.textContent = 'ถึง: ' + formatThaiDate(t, false);
+        } else if (mode === '7d') {
+          const s = getTodayStr(-6);
+          const e = getTodayStr(0);
+          startIn.value = s;
+          endIn.value = e;
+          if (startTxt) startTxt.textContent = 'ตั้งแต่: ' + formatThaiDate(s, false);
+          if (endTxt) endTxt.textContent = 'ถึง: ' + formatThaiDate(e, false);
+        } else if (mode === 'month') {
+          const t = getTodayStr(0);
+          const s = t.slice(0, 7) + '-01';
+          startIn.value = s;
+          endIn.value = t;
+          if (startTxt) startTxt.textContent = 'ตั้งแต่: ' + formatThaiDate(s, false);
+          if (endTxt) endTxt.textContent = 'ถึง: ' + formatThaiDate(t, false);
+        }
+
+        if ((document.getElementById('lineImportTextarea').value || '').trim()) {
+          doParseAndRenderLineText();
+        }
+      });
+    });
+
     const btnParseLine = document.getElementById('btnParseLineText');
     if (btnParseLine) {
       btnParseLine.addEventListener('click', () => {
@@ -2966,7 +3039,7 @@
       btnConfirmLine.addEventListener('click', () => {
         const checkedItems = parsedLineItems.filter(item => item.checked);
         if (checkedItems.length === 0) {
-          showToast('กรุณาเลือกอย่างน้อย 1 รายการเพื่อบันทึกครับ', '⚠️');
+          showToast('ไม่มีรายการใหม่ที่เลือกไว้สำหรับบันทึกครับ', '⚠️');
           return;
         }
 
@@ -2974,7 +3047,13 @@
         const todayStr = getTodayStr(0);
 
         checkedItems.forEach((item, idx) => {
-          // If date is strictly in the future, save as scheduled expense; otherwise save as actual transaction
+          const noteParts = ['นำเข้าจาก Krungthai / LINE'];
+          if (item.txTime) noteParts.push(`เวลา ${item.txTime}`);
+          if (item.balanceAfter !== null && item.balanceAfter !== undefined) {
+            noteParts.push(`ยอดคงเหลือ ${formatCurrency(item.balanceAfter)}`);
+          }
+          const noteStr = noteParts.join(' • ');
+
           if (item.date > todayStr) {
             state.store.scheduledExpenses.push({
               id: `sch-line-${now}-${idx}`,
@@ -2985,7 +3064,10 @@
               recurrence: 'none',
               installmentCurrent: 0,
               installmentTotal: 0,
-              note: 'นำเข้าจากประวัติแชท Krungthai / LINE',
+              note: noteStr,
+              txTime: item.txTime || '',
+              balanceAfter: item.balanceAfter !== undefined ? item.balanceAfter : null,
+              importFingerprint: item.fingerprint,
               isPaid: false,
               updatedAt: now + idx,
               device: deviceProfile.name,
@@ -2998,8 +3080,11 @@
               amount: item.amount,
               category: item.category || (item.type === 'income' ? 'inc_salary' : 'exp_bills'),
               title: item.title,
-              note: 'นำเข้าจากประวัติแชท Krungthai / LINE',
+              note: noteStr,
               date: item.date,
+              txTime: item.txTime || '',
+              balanceAfter: item.balanceAfter !== undefined ? item.balanceAfter : null,
+              importFingerprint: item.fingerprint,
               slipDataUrl: null,
               createdAt: now + idx,
               updatedAt: now + idx,
@@ -3018,12 +3103,49 @@
         const titleEl = document.getElementById('lineDropZoneTitle');
         if (titleEl) titleEl.textContent = 'แตะที่นี่เพื่อเลือกไฟล์แชท LINE (.txt)';
         parsedLineItems = [];
-        showToast(`บันทึก ${checkedItems.length} รายการจาก LINE เรียบร้อยแล้ว!`, '🎉');
+        showToast(`บันทึก ${checkedItems.length} รายการใหม่จาก LINE เรียบร้อยแล้ว!`, '🎉');
       });
     }
   }
 
   let parsedLineItems = [];
+
+  function isDuplicateLineItem(item, seenInBatch) {
+    // 1. Check within the same uploaded file
+    if (seenInBatch.has(item.fingerprint)) return true;
+
+    // 2. Check against existing active transactions & scheduled expenses
+    const existingList = [
+      ...activeTransactions(),
+      ...activeScheduledExpenses().map(s => ({ ...s, date: s.dueDate, type: 'expense' }))
+    ];
+
+    for (const ex of existingList) {
+      // Exact fingerprint match
+      if (ex.importFingerprint && ex.importFingerprint === item.fingerprint) {
+        return true;
+      }
+
+      // Composite match: Date + Time + Amount + Available Balance
+      const sameDate = ex.date === item.date;
+      const sameAmt = Math.abs(Number(ex.amount || 0) - Number(item.amount || 0)) < 0.005;
+      if (!sameDate || !sameAmt) continue;
+
+      const exTime = ex.txTime || '';
+      const exBal = ex.balanceAfter !== undefined && ex.balanceAfter !== null ? Number(ex.balanceAfter) : null;
+
+      if (item.txTime && exTime && item.balanceAfter !== null && exBal !== null) {
+        if (item.txTime === exTime && Math.abs(item.balanceAfter - exBal) < 0.005) {
+          return true;
+        }
+      } else if (item.txTime && exTime && item.txTime === exTime) {
+        return true;
+      } else if (item.balanceAfter !== null && exBal !== null && Math.abs(item.balanceAfter - exBal) < 0.005) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   function doParseAndRenderLineText() {
     const rawText = document.getElementById('lineImportTextarea').value || '';
@@ -3032,42 +3154,70 @@
       return;
     }
 
-    parsedLineItems = parseLineOrBankText(rawText);
+    const allParsed = parseLineOrBankText(rawText);
+    const startDate = (document.getElementById('lineFilterStartInput') && document.getElementById('lineFilterStartInput').value) || '';
+    const endDate = (document.getElementById('lineFilterEndInput') && document.getElementById('lineFilterEndInput').value) || '';
+
+    const filteredByDate = allParsed.filter(item => {
+      if (startDate && item.date < startDate) return false;
+      if (endDate && item.date > endDate) return false;
+      return true;
+    });
+
+    const seenInBatch = new Set();
+    parsedLineItems = filteredByDate.map(item => {
+      const dup = isDuplicateLineItem(item, seenInBatch);
+      seenInBatch.add(item.fingerprint);
+      return {
+        ...item,
+        isDuplicate: dup,
+        checked: !dup
+      };
+    });
+
     const wrap = document.getElementById('lineImportPreviewWrap');
     const countEl = document.getElementById('lineDetectedCount');
     const listEl = document.getElementById('lineParsedList');
     const incSumEl = document.getElementById('lineTotalIncomeSummary');
     const expSumEl = document.getElementById('lineTotalExpenseSummary');
 
-    if (parsedLineItems.length === 0) {
+    if (allParsed.length === 0) {
       showToast('ไม่พบรายการยอดเงินในไฟล์ กรุณาตรวจสอบไฟล์ที่เลือกครับ', '⚠️');
       wrap.style.display = 'none';
       return;
     }
 
-    countEl.textContent = parsedLineItems.length;
+    const newCount = parsedLineItems.filter(p => !p.isDuplicate).length;
+    const dupCount = parsedLineItems.filter(p => p.isDuplicate).length;
+    countEl.textContent = `${parsedLineItems.length} (ใหม่ ${newCount} • ซ้ำ ${dupCount})`;
     wrap.style.display = 'block';
 
     const updateSummaries = () => {
       const active = parsedLineItems.filter(p => p.checked);
       const inc = active.filter(p => p.type === 'income').reduce((s, p) => s + p.amount, 0);
       const exp = active.filter(p => p.type === 'expense').reduce((s, p) => s + p.amount, 0);
-      if (incSumEl) incSumEl.textContent = `รับ: +${formatCurrency(inc)}`;
+      if (incSumEl) incSumEl.textContent = `เลือกเพิ่ม รับ: +${formatCurrency(inc)}`;
       if (expSumEl) expSumEl.textContent = `จ่าย: -${formatCurrency(exp)}`;
     };
 
     updateSummaries();
 
+    if (parsedLineItems.length === 0) {
+      listEl.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.85rem;">ไม่มีรายการในช่วงวันที่ที่เลือก (พบทั้งหมดในไฟล์ ${allParsed.length} รายการ)</div>`;
+      return;
+    }
+
     listEl.innerHTML = parsedLineItems.map((item, idx) => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border-color);border-radius:10px;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:${item.isDuplicate ? '#F8FAFC' : '#FFFFFF'};border:1px solid ${item.isDuplicate ? '#E2E8F0' : 'var(--border-color)'};border-radius:10px;gap:10px;opacity:${item.isDuplicate ? '0.68' : '1'};">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;min-width:0;">
           <input type="checkbox" data-line-chk="${idx}" ${item.checked ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer;" />
           <div style="min-width:0;">
-            <div style="font-weight:700;font-size:0.88rem;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${escapeHtml(item.title)}
+            <div style="font-weight:700;font-size:0.86rem;color:var(--text-main);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span>${escapeHtml(item.title)}</span>
+              ${item.isDuplicate ? '<span style="font-size:0.7rem;background:#FEF3C7;color:#92400E;padding:1px 6px;border-radius:999px;font-weight:700;">🔁 ซ้ำ (ข้ามอัตโนมัติ)</span>' : '<span style="font-size:0.7rem;background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:999px;font-weight:700;">✨ ใหม่</span>'}
             </div>
-            <div style="font-size:0.75rem;color:var(--text-secondary);">
-              📅 ${formatThaiDate(item.date, false)} • <span style="font-weight:700;color:${item.type === 'income' ? 'var(--income-color)' : 'var(--expense-color)'};">${item.type === 'income' ? '📈 รายรับ' : '📉 รายจ่าย'}</span>
+            <div style="font-size:0.74rem;color:var(--text-secondary);">
+              📅 ${formatThaiDate(item.date, false)}${item.txTime ? ` ⏰ ${item.txTime}` : ''} • <span style="font-weight:700;color:${item.type === 'income' ? 'var(--income-color)' : 'var(--expense-color)'};">${item.type === 'income' ? '📈 รายรับ' : '📉 รายจ่าย'}</span>${item.balanceAfter !== null ? ` • คงเหลือ ${formatCurrency(item.balanceAfter)}` : ''}
             </div>
           </div>
         </label>
@@ -3078,7 +3228,7 @@
     `).join('');
 
     listEl.querySelectorAll('[data-line-chk]').forEach(chk => {
-      chk.addEventListener('change', e => {
+      chk.addEventListener('change', () => {
         const i = Number(chk.dataset.lineChk);
         if (parsedLineItems[i]) parsedLineItems[i].checked = chk.checked;
         updateSummaries();
@@ -3099,7 +3249,6 @@
     const currentYear = new Date().getFullYear();
     const todayStr = getTodayStr(0);
 
-    // If it's a full LINE chat export file, process lines sequentially tracking date headers
     const rawLines = text.split(/\r?\n/);
     const results = [];
     let currentDate = todayStr;
@@ -3109,79 +3258,108 @@
       if (!blockLines || blockLines.length === 0) return;
       const blockText = blockLines.join('\n');
 
-      const hasMoney = /(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|บาท|฿|โอนออก|โอนเข้า|ชำระ)/.test(blockText);
+      const hasMoney = /(?:เงินเข้า|เงินออก|จำนวนเงิน|จำนวน|ยอดเงิน|ยอดเงินที่ใช้ได้|ยอด|บาท|฿|โอนออก|โอนเข้า|ชำระ|ถอนเงิน|จ่ายเงิน)/.test(blockText);
       if (!hasMoney) return;
 
       let type = 'expense';
-      if (/โอนเข้า|เงินเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า/i.test(blockText)) {
+      if (/เงินเข้า|โอนเข้า|รับเงิน|ฝากเงิน|เงินโอนเข้า|รับโอน/i.test(blockText)) {
         type = 'income';
       }
 
+      // 1. Separate available balance ("ยอดเงินที่ใช้ได้ X,XXX.XX บาท") FIRST so it never collides with transaction amount
+      let balanceAfter = null;
+      const balMatch = blockText.match(/ยอดเงินที่ใช้ได้\s*[:：]?\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
+      if (balMatch) {
+        balanceAfter = parseFloat(balMatch[1].replace(/,/g, ''));
+      }
+      const textWithoutBalance = blockText.replace(/ยอดเงินที่ใช้ได้\s*[:：]?\s*[0-9,]+(?:\.[0-9]{1,2})?\s*(?:บาท)?/g, '');
+
+      // 2. Extract transaction amount
       let amount = 0;
-      const ktAmt = blockText.match(/(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
+      const ktAmt = textWithoutBalance.match(/(?:เงินเข้า|เงินออก|โอนออก|โอนเข้า|โอนเงิน|ชำระเงิน|ถอนเงิน|จ่ายเงิน|จำนวนเงิน|จำนวน|ยอดเงิน|ยอด|฿)\s*[:：]?\s*([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:บาท)?/);
       if (ktAmt) {
         amount = parseFloat(ktAmt[1].replace(/,/g, ''));
       } else {
-        const numbers = blockText.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
-        if (numbers) {
-          amount = parseFloat(numbers[numbers.length - 1].replace(/,/g, ''));
+        const bahtMatch = textWithoutBalance.match(/([0-9,]+(?:\.[0-9]{1,2})?)\s*บาท/);
+        if (bahtMatch) {
+          amount = parseFloat(bahtMatch[1].replace(/,/g, ''));
+        } else {
+          const numbers = textWithoutBalance.match(/\b\d+(?:,\d{3})*(?:\.\d{2})?\b/g);
+          if (numbers) {
+            amount = parseFloat(numbers[numbers.length - 1].replace(/,/g, ''));
+          }
         }
       }
 
       if (!amount || isNaN(amount) || amount <= 0) return;
 
+      // 3. Extract date & time
       let dateStr = fallbackDate || todayStr;
-      const dateMatch = blockText.match(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*(\d{2,4}))?/);
-      if (dateMatch) {
-        const d = parseInt(dateMatch[1], 10);
-        const m = thaiMonths[dateMatch[2]];
+      let txTime = '';
+
+      const lineTimeMatch = blockLines[0].match(/^(\d{1,2}:\d{2})(?:\t|\s)/);
+      if (lineTimeMatch) {
+        txTime = lineTimeMatch[1].padStart(5, '0');
+      }
+
+      const slashDateTime = blockText.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:\s+(\d{1,2}:\d{2}))?/);
+      const thaiDateMatch = blockText.match(/(\d{1,2})\s*(ม\.ค\.|มค|ก\.พ\.|กพ|มี\.ค\.|มีค|เม\.ย\.|เมย|พ\.ค\.|พค|มิ\.ย\.|มิย|ก\.ค\.|กค|ส\.ค\.|สค|ก\.ย\.|กย|ต\.ค\.|ตค|พ\.ย\.|พย|ธ\.ค\.|ธค)(?:\s*(\d{2,4}))?(?:\s+(?:เวลา\s*)?(\d{1,2}:\d{2}))?/);
+
+      if (slashDateTime) {
+        const d = parseInt(slashDateTime[1], 10);
+        const m = parseInt(slashDateTime[2], 10);
+        let yr = parseInt(slashDateTime[3], 10);
+        if (yr > 2500) yr -= 543;
+        else if (yr >= 50 && yr <= 99) yr = (2500 + yr) - 543;
+        else if (yr < 50) yr += 2000;
+        dateStr = `${yr}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (slashDateTime[4]) txTime = slashDateTime[4].padStart(5, '0');
+      } else if (thaiDateMatch) {
+        const d = parseInt(thaiDateMatch[1], 10);
+        const m = thaiMonths[thaiDateMatch[2]];
         let y = currentYear;
-        if (dateMatch[3]) {
-          let yr = parseInt(dateMatch[3], 10);
+        if (thaiDateMatch[3]) {
+          let yr = parseInt(thaiDateMatch[3], 10);
           if (yr > 2500) yr -= 543;
           else if (yr >= 50 && yr <= 99) yr = (2500 + yr) - 543;
           else if (yr < 50) yr += 2000;
           y = yr;
         }
         dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      } else {
-        const slashDate = blockText.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-        if (slashDate) {
-          const d = parseInt(slashDate[1], 10);
-          const m = parseInt(slashDate[2], 10);
-          let yr = parseInt(slashDate[3], 10);
-          if (yr > 2500) yr -= 543;
-          else if (yr >= 50 && yr <= 99) yr = (2500 + yr) - 543;
-          else if (yr < 50) yr += 2000;
-          dateStr = `${yr}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        }
+        if (thaiDateMatch[4]) txTime = thaiDateMatch[4].padStart(5, '0');
       }
 
+      // 4. Extract title
       let title = '';
       const toMatch = blockText.match(/(?:ไปยัง|โอนให้|ชำระให้|จ่ายให้)\s*([^\n\r]+)/);
-      const fromMatch = blockText.match(/(?:จาก|รับจาก)\s*([^\n\r]+)/);
-      const billMatch = blockText.match(/(?:ชำระ|บิล)\s*([^\n\r]+)/);
+      const fromMatch = blockText.match(/(?:รับจาก)\s*([^\n\r]+)/);
+      const acctMatch = blockText.match(/(?:เข้าบัญชี|จากบัญชี|บัญชี)\s*([X\d\-]+)/i);
 
       if (toMatch) {
         title = `โอนไป ${toMatch[1].trim()}`;
       } else if (fromMatch && type === 'income') {
         title = `รับจาก ${fromMatch[1].trim()}`;
-      } else if (billMatch) {
-        title = billMatch[0].trim();
+      } else if (acctMatch) {
+        title = `${type === 'income' ? 'เงินเข้าบัญชี' : 'เงินออกบัญชี'} ${acctMatch[1]}`;
       } else {
         const cleanFirstLine = blockLines[0].replace(/^\d{1,2}:\d{2}\s*(?:[^\t]+\t)?/, '').trim();
-        title = cleanFirstLine || (type === 'income' ? 'เงินโอนเข้า' : 'เงินโอนออก');
+        title = cleanFirstLine || (type === 'income' ? 'เงินเข้า Krungthai' : 'เงินออก Krungthai');
       }
 
       let category = type === 'income' ? 'inc_salary' : 'exp_bills';
       if (/อาหาร|ข้าว|ก๋วยเตี๋ยว|ขนม|กาแฟ|7-eleven|food/i.test(title)) category = 'exp_food';
       else if (/น้ำมัน|รถ|ทางด่วน|ptt|bcp|shell/i.test(title)) category = 'exp_transport';
 
+      const fingerprint = `${dateStr}|${txTime}|${type}|${amount.toFixed(2)}|${balanceAfter !== null ? balanceAfter.toFixed(2) : ''}`;
+
       results.push({
         id: `import-${Date.now()}-${results.length}`,
         type,
         amount,
         date: dateStr,
+        txTime,
+        balanceAfter,
+        fingerprint,
         title,
         category,
         checked: true
@@ -3219,7 +3397,6 @@
         processBlock(currentBlock, currentDate);
       }
     } else {
-      // Fallback: chunk by double linebreaks or lines
       let rawBlocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
       if (rawBlocks.length === 1 && text.includes('\n')) {
         const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
