@@ -2534,11 +2534,11 @@ button:active,
             🎯 เลือกรายการที่ต้องการดึง (ข้อความอื่นๆ ในแชทจะถูกข้ามทั้งหมด):
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button type="button" class="quick-tag" data-line-type-filter="income_only" style="background:#059669;color:#FFF;border-color:#059669;font-weight:700;">
-              📈 เฉพาะ "เงินเข้า" เท่านั้น
-            </button>
-            <button type="button" class="quick-tag" data-line-type-filter="both">
+            <button type="button" class="quick-tag" data-line-type-filter="both" style="background:#059669;color:#FFF;border-color:#059669;font-weight:700;">
               🔄 ทั้ง "เงินเข้า" และ "เงินออก"
+            </button>
+            <button type="button" class="quick-tag" data-line-type-filter="income_only">
+              📈 เฉพาะ "เงินเข้า" เท่านั้น
             </button>
             <button type="button" class="quick-tag" data-line-type-filter="expense_only">
               📉 เฉพาะ "เงินออก" เท่านั้น
@@ -5772,7 +5772,7 @@ button:active,
   }
 
   let parsedLineItems = [];
-  let lineImportTypeFilter = 'income_only';
+  let lineImportTypeFilter = 'both';
 
   function isDuplicateLineItem(item, seenInBatch) {
     // 1. Check within the same uploaded file

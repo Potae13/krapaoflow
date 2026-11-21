@@ -3130,7 +3130,7 @@
   }
 
   let parsedLineItems = [];
-  let lineImportTypeFilter = 'income_only';
+  let lineImportTypeFilter = 'both';
 
   function isDuplicateLineItem(item, seenInBatch) {
     // 1. Check within the same uploaded file
